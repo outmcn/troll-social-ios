@@ -26,6 +26,7 @@ struct APIClient {
     func like(postID: String, token: String) async throws -> SinglePostResponse { try await send("api/posts/\(postID)/like", method: "POST", token: token) }
     func comments(postID: String, token: String) async throws -> CommentsResponse { try await send("api/posts/\(postID)/comments", token: token) }
     func comment(postID: String, text: String, token: String) async throws -> SinglePostResponse { try await send("api/posts/\(postID)/comments", method: "POST", token: token, body: JSONEncoder().encode(CommentBody(text: text))) }
+    func chats(token: String) async throws -> ChatsResponse { try await send("api/chats", token: token) }
     func deletePost(postID: String, token: String) async throws -> BasicResponse { try await send("api/posts/\(postID)", method: "DELETE", token: token) }
 }
 struct Credentials: Encodable { let username: String; let password: String }
