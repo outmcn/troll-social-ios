@@ -3,39 +3,53 @@ import SwiftUI
 @main
 struct TrollSocialApp: App {
     @StateObject private var store = SocialStore()
-    var body: some Scene {
-        WindowGroup { RootView().environmentObject(store) }
-    }
+    var body: some Scene { WindowGroup { RootView().environmentObject(store) } }
 }
 
+@MainActor
 final class SocialStore: ObservableObject {
     @Published var selectedTab = 0
-    @Published var posts: [Post] = Post.samples
-    @Published var chats: [Chat] = Chat.samples
+    @Published var posts: [Post] = []
+    @Published var chats: [Chat] = []
     @Published var showingComposer = false
     @Published var toast = ""
+    @Published var user: User?
+    @Published var isLoading = false
+    let api = APIClient(baseURL: APIClient.officialBaseURL)
+    private let tokenKey = "trollsocial.auth.token"
 
-    func like(_ post: Post) {
-        guard let index = posts.firstIndex(where: { $0.id == post.id }) else { return }
-        posts[index].liked.toggle()
-        posts[index].likes += posts[index].liked ? 1 : -1
+    init() { Task { await restoreSession() } }
+    var token: String? { UserDefaults.standard.string(forKey: tokenKey) }
+    func restoreSession() async {
+        guard let token else { return }
+        do { let response: SessionResponse = try await api.session(token: token); user = response.user; await loadContent() }
+        catch { logout() }
     }
-    func publish(_ text: String) {
-        let value = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !value.isEmpty else { return }
-        posts.insert(Post(author: "我", handle: "@troll_user", time: "刚刚", text: value, likes: 0, comments: 0, liked: false, accent: .orange), at: 0)
-        showingComposer = false; toast = "已发布到广场"
+    func login(username: String, password: String) async -> Bool {
+        do { let response = try await api.login(username: username, password: password); UserDefaults.standard.set(response.token, forKey: tokenKey); user = response.user; await loadContent(); return true } catch { toast = error.localizedDescription; return false }
     }
+    func register(username: String, password: String) async -> Bool {
+        do { let _: RegisterResponse = try await api.register(username: username, password: password); toast = "注册成功，请登录"; return true } catch { toast = error.localizedDescription; return false }
+    }
+    func logout() { UserDefaults.standard.removeObject(forKey: tokenKey); user = nil; posts = []; chats = [] }
+    func loadContent() async {
+        guard let token else { return }
+        isLoading = true
+        do {
+            let result = try await api.posts(token: token)
+            posts = result.posts.map { Post(remote: $0) }
+            let chatResult = try await api.chats(token: token)
+            chats = chatResult.chats.map { Chat(remote: $0) }
+        } catch { toast = error.localizedDescription }
+        isLoading = false
+    }
+    func like(_ post: Post) { guard let token else { return }; Task { do { let result = try await api.like(postID: post.id.uuidString, token: token); if let i = posts.firstIndex(where: { $0.id == post.id }) { posts[i] = Post(remote: result.post, liked: true) } } catch { toast = error.localizedDescription } } }
+    func publish(_ text: String) { guard let token else { return }; let value = text.trimmingCharacters(in: .whitespacesAndNewlines); guard !value.isEmpty else { return }; Task { do { let result = try await api.publish(text: value, token: token); posts.insert(Post(remote: result.post), at: 0); showingComposer = false; toast = "已发布到广场" } catch { toast = error.localizedDescription } } }
 }
 
-struct Post: Identifiable {
-    let id = UUID(); var author: String; var handle: String; var time: String; var text: String
-    var likes: Int; var comments: Int; var liked: Bool; var accent: Color
-    static let samples = [
-        Post(author: "小岛日记", handle: "@island", time: "12分钟前", text: "今天的风很温柔，适合去海边走走。", likes: 128, comments: 18, liked: false, accent: .blue),
-        Post(author: "像素研究所", handle: "@pixel_lab", time: "38分钟前", text: "分享一个最近在做的小项目，欢迎大家交流想法。", likes: 86, comments: 12, liked: false, accent: .purple),
-        Post(author: "晚风", handle: "@evening", time: "1小时前", text: "把普通的一天，也过得有一点期待。", likes: 52, comments: 7, liked: false, accent: .pink)
-    ]
+struct Post: Identifiable { let id: UUID; var author: String; var handle: String; var time: String; var text: String; var likes: Int; var comments: Int; var liked: Bool; var accent: Color
+    init(remote: RemotePost, liked: Bool = false) { id = UUID(uuidString: remote.id) ?? UUID(); author = remote.author; handle = remote.handle; time = "刚刚"; text = remote.text; likes = remote.likes; comments = remote.comments; self.liked = liked; accent = .orange }
 }
-struct Chat: Identifiable { let id = UUID(); let name: String; let message: String; let time: String; let unread: Int
-    static let samples = [Chat(name: "小岛日记", message: "周末一起去看展吗？", time: "09:42", unread: 2), Chat(name: "像素研究所", message: "文件我已经发给你了", time: "昨天", unread: 0), Chat(name: "晚风", message: "晚安，明天见", time: "周一", unread: 0)] }
+struct Chat: Identifiable { let id: UUID; let name: String; let message: String; let time: String; let unread: Int
+    init(remote: RemoteChat) { id = UUID(uuidString: remote.id) ?? UUID(); name = remote.name; message = remote.message; time = remote.time; unread = remote.unread }
+}
