@@ -1,22 +1,52 @@
 import SwiftUI
 
+struct AvatarOption: Identifiable {
+    let id: String
+    let symbol: String
+    let color: Color
+    static let all: [AvatarOption] = [
+        AvatarOption(id: "sun", symbol: "☀️", color: .orange),
+        AvatarOption(id: "moon", symbol: "🌙", color: .indigo),
+        AvatarOption(id: "star", symbol: "⭐️", color: .yellow),
+        AvatarOption(id: "cloud", symbol: "☁️", color: .blue),
+        AvatarOption(id: "flower", symbol: "🌸", color: .pink),
+        AvatarOption(id: "leaf", symbol: "🍃", color: .green),
+        AvatarOption(id: "coffee", symbol: "☕️", color: .brown),
+        AvatarOption(id: "music", symbol: "🎵", color: .purple),
+        AvatarOption(id: "camera", symbol: "📷", color: .teal),
+        AvatarOption(id: "heart", symbol: "❤️", color: .red)
+    ]
+}
+
 struct ProfileView: View {
     @EnvironmentObject var store: SocialStore
-    @Environment(\.dismiss) private var dismiss
     @State private var username = ""
     @State private var bio = ""
     @State private var avatar = ""
     @State private var message = ""
     @State private var saving = false
 
+    private var selectedAvatar: AvatarOption? { AvatarOption.all.first { $0.id == avatar } }
+    private var currentAvatar: AvatarOption { selectedAvatar ?? AvatarOption.all[0] }
+
     var body: some View {
         Form {
-            Section("头像") {
+            Section("选择头像") {
                 HStack {
-                    Circle().fill(.orange.opacity(0.2)).frame(width: 76, height: 76)
-                        .overlay(Text(avatar.isEmpty ? String(username.prefix(1)) : avatar).font(.title.bold()).foregroundColor(.orange))
-                    TextField("头像文字（1个字）", text: $avatar).textFieldStyle(.roundedBorder)
+                    Circle().fill(currentAvatar.color.opacity(0.18)).frame(width: 76, height: 76)
+                        .overlay(Text(currentAvatar.symbol).font(.system(size: 38)))
+                    Text("选择一个喜欢的头像").foregroundColor(.secondary)
                 }
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 14) {
+                    ForEach(AvatarOption.all) { option in
+                        Button { avatar = option.id } label: {
+                            Circle().fill(option.color.opacity(avatar == option.id ? 0.35 : 0.14))
+                                .frame(width: 48, height: 48)
+                                .overlay(Text(option.symbol).font(.title2))
+                                .overlay(Circle().stroke(avatar == option.id ? option.color : .clear, lineWidth: 3))
+                        }
+                    }
+                }.padding(.vertical, 5)
             }
             Section("个人资料") {
                 TextField("用户名", text: $username).textInputAutocapitalization(.never).autocorrectionDisabled()
@@ -39,7 +69,7 @@ struct ProfileView: View {
         .task {
             username = store.user?.username ?? ""
             bio = store.user?.bio ?? ""
-            avatar = store.user?.avatar ?? ""
+            avatar = store.user?.avatar ?? "sun"
         }
     }
 }
