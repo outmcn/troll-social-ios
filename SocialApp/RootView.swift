@@ -76,7 +76,7 @@ struct Header: View { let title: String?; let subtitle: String?; init(title: Str
 
 struct HomeTab: View {
     @EnvironmentObject var store: SocialStore
-    var body: some View { NavigationStack { ScrollView { VStack(alignment: .leading, spacing: 18) { Header(subtitle: "记录生活，也看看朋友们的近况")
+    var body: some View { NavigationStack { ScrollView { VStack(alignment: .leading, spacing: 18) { Text("记录生活，也看看朋友们的近况").font(.subheadline).foregroundColor(.secondary)
  StoryRow()
  }.padding(18) }.toolbar { ToolbarItem(placement: .topBarTrailing) { Image(systemName: "bell") } }.background(Color(.systemGroupedBackground)) }.navigationTitle("主页").navigationBarTitleDisplayMode(.inline) }
 }
