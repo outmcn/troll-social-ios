@@ -142,10 +142,7 @@ struct MeTab: View {
                     else {
                         ForEach(mine) { post in
                             VStack(alignment: .leading, spacing: 8) {
-                                PostCard(post: post)
-                                Button { store.delete(post) } label: { Label("删除动态", systemImage: "trash") }
-                                    .buttonStyle(.bordered)
-                                    .tint(.red)
+                                PostCard(post: post, allowsDelete: true)
                             }
                         }
                     }
@@ -153,11 +150,11 @@ struct MeTab: View {
             } else if category == 1 {
                 let mineFavorites = store.posts.filter { store.favorites.contains($0.id) || $0.favorited }
                 if mineFavorites.isEmpty { EmptyCategoryView(text: "还没有收藏内容") }
-                else { ForEach(mineFavorites) { PostCard(post: $0) } }
+                else { ForEach(mineFavorites) { PostCard(post: $0, allowsDelete: false) } }
             } else {
                 let mineLikes = store.posts.filter { $0.liked }
                 if mineLikes.isEmpty { EmptyCategoryView(text: "还没有点赞内容") }
-                else { ForEach(mineLikes) { PostCard(post: $0) } }
+                else { ForEach(mineLikes) { PostCard(post: $0, allowsDelete: false) } }
             }
         }
     }

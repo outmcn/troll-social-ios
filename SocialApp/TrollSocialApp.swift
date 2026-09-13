@@ -71,7 +71,7 @@ final class SocialStore: ObservableObject {
         Task { @MainActor in
             do {
                 let _: BasicResponse = try await api.deletePost(postID: post.remoteID, token: token)
-                posts.removeAll { $0.id.uuidString.lowercased() == post.id.uuidString.lowercased() }
+                posts.removeAll { $0.remoteID == post.remoteID }
                 favorites.remove(post.id)
                 selectedPost = nil
                 toast = "动态已删除"

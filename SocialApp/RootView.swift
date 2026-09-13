@@ -81,22 +81,24 @@ struct HomeTab: View {
  }.padding(18) }.toolbar { ToolbarItem(placement: .topBarTrailing) { Image(systemName: "bell") } }.background(Color(.systemGroupedBackground)) } }
 }
 struct StoryRow: View { var body: some View { ScrollView(.horizontal, showsIndicators: false) { HStack(spacing: 14) { ForEach(["我的动态", "小岛日记", "像素研究所", "晚风"], id: \.self) { name in VStack(spacing: 6) { Circle().fill(.orange.opacity(0.2)).frame(width: 58, height: 58).overlay(Text(name.prefix(1)).font(.title2.bold()).foregroundColor(.orange)); Text(name).font(.caption) } } } } } }
-struct PlazaTab: View { @EnvironmentObject var store: SocialStore; var body: some View { NavigationStack { ScrollView { VStack(alignment: .leading, spacing: 14) { HStack { Text("广场").font(.system(size: 29, weight: .bold)); Spacer(); Image(systemName: "magnifyingglass") }; Text("发现大家正在分享的内容").foregroundColor(.secondary); FilterRow(); ForEach(store.posts) { post in PostCard(post: post) } }.padding(18) }.background(Color(.systemGroupedBackground)) } } }
+struct PlazaTab: View { @EnvironmentObject var store: SocialStore; var body: some View { NavigationStack { ScrollView { VStack(alignment: .leading, spacing: 14) { HStack { Text("广场").font(.system(size: 29, weight: .bold)); Spacer(); Image(systemName: "magnifyingglass") }; Text("发现大家正在分享的内容").foregroundColor(.secondary); FilterRow(); ForEach(store.posts) { post in PostCard(post: post, allowsDelete: false) } }.padding(18) }.background(Color(.systemGroupedBackground)) } } }
 struct FilterRow: View { var body: some View { HStack { ForEach(["推荐", "关注", "生活", "兴趣"], id: \.self) { item in Text(item).font(.caption.bold()).padding(.horizontal, 13).padding(.vertical, 8).background(item == "推荐" ? Color.orange : Color(.tertiarySystemBackground)).foregroundColor(item == "推荐" ? .white : .primary).clipShape(Capsule()) } } } }
 struct PostCard: View {
     @EnvironmentObject var store: SocialStore
     let post: Post
+    let allowsDelete: Bool
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack { Circle().fill(post.accent.opacity(0.2)).frame(width: 42, height: 42).overlay(Text(post.author.prefix(1)).bold().foregroundColor(post.accent)); VStack(alignment: .leading, spacing: 3) { Text(post.author).bold(); HStack(spacing: 5) { Text("ID：\(post.authorID)"); if !post.ipRegion.isEmpty { Text("·"); Text(post.ipRegion) } }.font(.caption).foregroundColor(.secondary); Text(post.time).font(.caption2).foregroundColor(.secondary) }; Spacer() }
             Text(post.text).frame(maxWidth: .infinity, alignment: .leading)
             Divider()
-            HStack(spacing: 6) {
-                Button { store.like(post) } label: { Label("\(post.likes)", systemImage: post.liked ? "heart.fill" : "heart").frame(maxWidth: .infinity).padding(.vertical, 11) }.buttonStyle(.bordered).tint(post.liked ? .pink : .gray)
-                Button { store.favorite(post) } label: { Label("\(post.favorites)", systemImage: store.favorites.contains(post.id) ? "bookmark.fill" : "bookmark").frame(maxWidth: .infinity).padding(.vertical, 11) }.buttonStyle(.bordered).tint(store.favorites.contains(post.id) ? .orange : .gray)
-                Button { store.selectedPost = post } label: { Label("\(post.comments)", systemImage: "message").frame(maxWidth: .infinity).padding(.vertical, 11) }.buttonStyle(.bordered).tint(.gray)
-                ShareLink(item: post.text) { Label("分享", systemImage: "arrowshape.turn.up.right").frame(maxWidth: .infinity).padding(.vertical, 11) }.buttonStyle(.bordered).tint(.gray)
-            }.font(.caption)
+            HStack(spacing: 4) {
+                Button { store.like(post) } label: { Label("\(post.likes)", systemImage: post.liked ? "heart.fill" : "heart").frame(maxWidth: .infinity).padding(.vertical, 5) }.buttonStyle(.bordered).tint(post.liked ? .pink : .gray)
+                Button { store.favorite(post) } label: { Label("\(post.favorites)", systemImage: store.favorites.contains(post.id) ? "bookmark.fill" : "bookmark").frame(maxWidth: .infinity).padding(.vertical, 5) }.buttonStyle(.bordered).tint(store.favorites.contains(post.id) ? .orange : .gray)
+                Button { store.selectedPost = post } label: { Label("\(post.comments)", systemImage: "message").frame(maxWidth: .infinity).padding(.vertical, 5) }.buttonStyle(.bordered).tint(.gray)
+                ShareLink(item: post.text) { Label("分享", systemImage: "arrowshape.turn.up.right").frame(maxWidth: .infinity).padding(.vertical, 5) }.buttonStyle(.bordered).tint(.gray)
+                if allowsDelete { Button { store.delete(post) } label: { Image(systemName: "trash").frame(maxWidth: .infinity).padding(.vertical, 5) }.buttonStyle(.bordered).tint(.red) }
+            }.font(.caption2)
         }
         .padding(15).background(Color(.secondarySystemBackground)).overlay(RoundedRectangle(cornerRadius: 18).stroke(Color(.separator).opacity(0.35), lineWidth: 0.7)).clipShape(RoundedRectangle(cornerRadius: 18))
         .sheet(item: $store.selectedPost) { selected in CommentsView(post: selected).environmentObject(store) }
