@@ -43,7 +43,7 @@ final class SocialStore: ObservableObject {
         } catch { toast = error.localizedDescription }
         isLoading = false
     }
-    func like(_ post: Post) { guard let token else { return }; Task { do { let result = try await api.like(postID: post.id.uuidString, token: token); if let i = posts.firstIndex(where: { $0.id == post.id }) { posts[i] = Post(remote: result.post, liked: true) } } catch { toast = error.localizedDescription } } }
+    func like(_ post: Post) { guard let token else { return }; Task { do { let result = try await api.like(postID: post.id.uuidString, token: token); if let i = posts.firstIndex(where: { $0.id == post.id }) { posts[i] = Post(remote: result.post, liked: !post.liked) } } catch { toast = error.localizedDescription } } }
     func publish(_ text: String) { guard let token else { return }; let value = text.trimmingCharacters(in: .whitespacesAndNewlines); guard !value.isEmpty else { return }; Task { do { let result = try await api.publish(text: value, token: token); posts.insert(Post(remote: result.post), at: 0); showingComposer = false; toast = "已发布到广场" } catch { toast = error.localizedDescription } } }
 }
 
