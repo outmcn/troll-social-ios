@@ -22,12 +22,11 @@ struct ProfileView: View {
     @EnvironmentObject var store: SocialStore
     @State private var username = ""
     @State private var bio = ""
-    @State private var avatar = ""
+    @State private var avatar = "sun"
     @State private var message = ""
     @State private var saving = false
 
-    private var selectedAvatar: AvatarOption? { AvatarOption.all.first { $0.id == avatar } }
-    private var currentAvatar: AvatarOption { selectedAvatar ?? AvatarOption.all[0] }
+    private var currentAvatar: AvatarOption { AvatarOption.all.first { $0.id == avatar } ?? AvatarOption.all[0] }
 
     var body: some View {
         Form {
@@ -37,16 +36,17 @@ struct ProfileView: View {
                         .overlay(Text(currentAvatar.symbol).font(.system(size: 38)))
                     Text("选择一个喜欢的头像").foregroundColor(.secondary)
                 }
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 14) {
-                    ForEach(AvatarOption.all) { option in
-                        Button { avatar = option.id } label: {
-                            Circle().fill(option.color.opacity(avatar == option.id ? 0.35 : 0.14))
-                                .frame(width: 48, height: 48)
-                                .overlay(Text(option.symbol).font(.title2))
-                                .overlay(Circle().stroke(avatar == option.id ? option.color : .clear, lineWidth: 3))
+                VStack(spacing: 12) {
+                    ForEach(0..<2, id: \.self) { row in
+                        HStack(spacing: 12) {
+                            ForEach(0..<5, id: \.self) { column in
+                                let index = row * 5 + column
+                                avatarButton(AvatarOption.all[index])
+                            }
                         }
                     }
-                }.padding(.vertical, 5)
+                }
+                .padding(.vertical, 6)
             }
             Section("个人资料") {
                 TextField("用户名", text: $username).textInputAutocapitalization(.never).autocorrectionDisabled()
@@ -69,8 +69,25 @@ struct ProfileView: View {
         .task {
             username = store.user?.username ?? ""
             bio = store.user?.bio ?? ""
-            avatar = store.user?.avatar ?? "sun"
+            avatar = AvatarOption.all.contains { $0.id == store.user?.avatar } ? (store.user?.avatar ?? "sun") : "sun"
         }
+    }
+
+    private func avatarButton(_ option: AvatarOption) -> some View {
+        Button {
+            avatar = option.id
+            message = "已选择\(option.symbol)"
+        } label: {
+            Text(option.symbol)
+                .font(.system(size: 25))
+                .frame(maxWidth: .infinity, minHeight: 52)
+                .background(option.color.opacity(avatar == option.id ? 0.35 : 0.14))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(avatar == option.id ? option.color : .clear, lineWidth: 2.5))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("选择头像\(option.id)")
     }
 }
 
