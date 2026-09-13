@@ -15,15 +15,17 @@ final class SocialStore: ObservableObject {
     @Published var toast = ""
     @Published var user: User?
     @Published var isLoading = false
+    @Published var sessionChecked = false
     let api = APIClient(baseURL: APIClient.officialBaseURL)
     private let tokenKey = "trollsocial.auth.token"
 
     init() { Task { await restoreSession() } }
     var token: String? { UserDefaults.standard.string(forKey: tokenKey) }
     func restoreSession() async {
-        guard let token else { return }
-        do { let response: SessionResponse = try await api.session(token: token); user = response.user; await loadContent() }
+        guard let token else { sessionChecked = true; return }
+        do { let response: SessionResponse = try await api.session(token: token); user = response.user; sessionChecked = true; await loadContent() }
         catch { logout() }
+        sessionChecked = true
     }
     func login(username: String, password: String) async -> Bool {
         do { let response = try await api.login(username: username, password: password); UserDefaults.standard.set(response.token, forKey: tokenKey); user = response.user; await loadContent(); return true } catch { toast = error.localizedDescription; return false }

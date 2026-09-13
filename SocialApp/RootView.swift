@@ -4,8 +4,13 @@ struct RootView: View {
     @EnvironmentObject var store: SocialStore
     var body: some View {
         Group {
-            if store.user == nil { AuthView() }
-            else { mainView }
+            if !store.sessionChecked {
+                ProgressView("正在恢复登录...").tint(.orange)
+            } else if store.user == nil {
+                AuthView()
+            } else {
+                mainView
+            }
         }
         .preferredColorScheme(nil)
         .background(Color(.systemBackground))
