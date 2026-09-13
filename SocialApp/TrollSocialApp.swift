@@ -8,7 +8,7 @@ struct TrollSocialApp: App {
     }
 }
 
-struct SocialStore: ObservableObject {
+final class SocialStore: ObservableObject {
     @Published var selectedTab = 0
     @Published var posts: [Post] = Post.samples
     @Published var chats: [Chat] = Chat.samples
