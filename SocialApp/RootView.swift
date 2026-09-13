@@ -92,13 +92,13 @@ struct PostCard: View {
             HStack { Circle().fill(post.accent.opacity(0.2)).frame(width: 42, height: 42).overlay(Text(post.author.prefix(1)).bold().foregroundColor(post.accent)); VStack(alignment: .leading, spacing: 3) { Text(post.author).bold(); HStack(spacing: 5) { Text("ID：\(post.authorID)"); if !post.ipRegion.isEmpty { Text("·"); Text(post.ipRegion) } }.font(.caption).foregroundColor(.secondary); Text(post.time).font(.caption2).foregroundColor(.secondary) }; Spacer() }
             Text(post.text).frame(maxWidth: .infinity, alignment: .leading)
             Divider()
-            HStack(spacing: 4) {
-                Button { store.like(post) } label: { Label("\(post.likes)", systemImage: post.liked ? "heart.fill" : "heart").frame(maxWidth: .infinity).padding(.vertical, 5) }.buttonStyle(.bordered).tint(post.liked ? .pink : .gray)
-                Button { store.favorite(post) } label: { Label("\(post.favorites)", systemImage: store.favorites.contains(post.id) ? "bookmark.fill" : "bookmark").frame(maxWidth: .infinity).padding(.vertical, 5) }.buttonStyle(.bordered).tint(store.favorites.contains(post.id) ? .orange : .gray)
-                Button { store.selectedPost = post } label: { Label("\(post.comments)", systemImage: "message").frame(maxWidth: .infinity).padding(.vertical, 5) }.buttonStyle(.bordered).tint(.gray)
-                ShareLink(item: post.text) { Image(systemName: "arrowshape.turn.up.right").frame(maxWidth: .infinity).padding(.vertical, 5) }.buttonStyle(.bordered).tint(.gray)
-                if allowsDelete { Button { store.delete(post) } label: { Image(systemName: "trash").frame(maxWidth: .infinity).padding(.vertical, 5) }.buttonStyle(.bordered).tint(.red) }
-            }.font(.caption2)
+            HStack(spacing: 3) {
+                Button { store.like(post) } label: { Label("\(post.likes)", systemImage: post.liked ? "heart.fill" : "heart") }.buttonStyle(.bordered).tint(post.liked ? .pink : .gray).frame(width: 52, height: 27)
+                Button { store.favorite(post) } label: { Label("\(post.favorites)", systemImage: store.favorites.contains(post.id) ? "bookmark.fill" : "bookmark") }.buttonStyle(.bordered).tint(store.favorites.contains(post.id) ? .orange : .gray).frame(width: 52, height: 27)
+                Button { store.selectedPost = post } label: { Label("\(post.comments)", systemImage: "message") }.buttonStyle(.bordered).tint(.gray).frame(width: 52, height: 27)
+                ShareLink(item: post.text) { Image(systemName: "arrowshape.turn.up.right") }.buttonStyle(.bordered).tint(.gray).frame(width: 52, height: 27)
+                if allowsDelete { Button { store.delete(post) } label: { Image(systemName: "trash") }.buttonStyle(.bordered).tint(.red).frame(width: 52, height: 27) }
+            }.font(.caption2).frame(maxWidth: .infinity, alignment: .center)
         }
         .padding(15).background(Color(.secondarySystemBackground)).overlay(RoundedRectangle(cornerRadius: 18).stroke(Color(.separator).opacity(0.35), lineWidth: 0.7)).clipShape(RoundedRectangle(cornerRadius: 18))
         .sheet(item: $store.selectedPost) { selected in CommentsView(post: selected).environmentObject(store) }
