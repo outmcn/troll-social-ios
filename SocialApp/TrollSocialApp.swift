@@ -58,8 +58,8 @@ final class SocialStore: ObservableObject {
     func publish(_ text: String) { guard let token else { return }; let value = text.trimmingCharacters(in: .whitespacesAndNewlines); guard !value.isEmpty else { return }; Task { do { let result = try await api.publish(text: value, token: token); posts.insert(Post(remote: result.post), at: 0); showingComposer = false; toast = "已发布到广场" } catch { toast = error.localizedDescription } } }
 }
 
-struct Post: Identifiable { let id: UUID; var author: String; var handle: String; var time: String; var text: String; var likes: Int; var comments: Int; var liked: Bool; var accent: Color
-    init(remote: RemotePost, liked: Bool = false) { id = UUID(uuidString: remote.id) ?? UUID(); author = remote.author; handle = remote.handle; time = "刚刚"; text = remote.text; likes = remote.likes; comments = remote.comments; self.liked = liked; accent = .orange }
+struct Post: Identifiable { let id: UUID; var author: String; var handle: String; var authorID: String; var ipRegion: String; var time: String; var text: String; var likes: Int; var comments: Int; var liked: Bool; var accent: Color
+    init(remote: RemotePost, liked: Bool = false) { id = UUID(uuidString: remote.id) ?? UUID(); author = remote.author; handle = remote.handle; authorID = remote.authorID; ipRegion = remote.ipRegion; time = "刚刚"; text = remote.text; likes = remote.likes; comments = remote.comments; self.liked = liked; accent = .orange }
 }
 struct Chat: Identifiable { let id: UUID; let name: String; let message: String; let time: String; let unread: Int
     init(remote: RemoteChat) { id = UUID(uuidString: remote.id) ?? UUID(); name = remote.name; message = remote.message; time = remote.time; unread = remote.unread }
