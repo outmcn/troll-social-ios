@@ -23,9 +23,9 @@ struct APIClient {
     func changePassword(oldPassword: String, newPassword: String, token: String) async throws -> BasicResponse { try await send("api/auth/password", method: "PUT", token: token, body: JSONEncoder().encode(PasswordBody(oldPassword: oldPassword, newPassword: newPassword))) }
     func posts(token: String) async throws -> PostsResponse { try await send("api/posts", token: token) }
     func publish(text: String, token: String) async throws -> SinglePostResponse { try await send("api/posts", method: "POST", token: token, body: JSONEncoder().encode(PublishBody(text: text))) }
+    func like(postID: String, token: String) async throws -> SinglePostResponse { try await send("api/posts/\(postID)/like", method: "POST", token: token) }
+    func comments(postID: String, token: String) async throws -> CommentsResponse { try await send("api/posts/\(postID)/comments", token: token) }
     func favorite(postID: String, token: String) async throws -> SinglePostResponse { try await send("api/posts/\(postID)/favorite", method: "POST", token: token) }
-    func deletePost(postID: String, token: String) async throws -> BasicResponse { try await send("api/posts/\(postID)", method: "DELETE", token: token) }
-
     func comment(postID: String, text: String, token: String) async throws -> SinglePostResponse { try await send("api/posts/\(postID)/comments", method: "POST", token: token, body: JSONEncoder().encode(CommentBody(text: text))) }
     func chats(token: String) async throws -> ChatsResponse { try await send("api/chats", token: token) }
 }
