@@ -75,7 +75,9 @@ struct Header: View { let title: String; let subtitle: String?; var body: some V
 
 struct HomeTab: View {
     @EnvironmentObject var store: SocialStore
-    var body: some View { NavigationStack { ScrollView { VStack(alignment: .leading, spacing: 18) { Header(title: "主页", subtitle: "记录生活，也看看朋友们的近况"); StoryRow(); Text("为你推荐").font(.headline); ForEach(Array(store.posts.prefix(2))) { post in PostCard(post: post) } }.padding(18) }.toolbar { ToolbarItem(placement: .topBarTrailing) { Image(systemName: "bell") } }.background(Color(.systemGroupedBackground)) } }
+    var body: some View { NavigationStack { ScrollView { VStack(alignment: .leading, spacing: 18) { Header(title: "主页", subtitle: "记录生活，也看看朋友们的近况")
+ StoryRow()
+ }.padding(18) }.toolbar { ToolbarItem(placement: .topBarTrailing) { Image(systemName: "bell") } }.background(Color(.systemGroupedBackground)) } }
 }
 struct StoryRow: View { var body: some View { ScrollView(.horizontal, showsIndicators: false) { HStack(spacing: 14) { ForEach(["我的动态", "小岛日记", "像素研究所", "晚风"], id: \.self) { name in VStack(spacing: 6) { Circle().fill(.orange.opacity(0.2)).frame(width: 58, height: 58).overlay(Text(name.prefix(1)).font(.title2.bold()).foregroundColor(.orange)); Text(name).font(.caption) } } } } } }
 struct PlazaTab: View { @EnvironmentObject var store: SocialStore; var body: some View { NavigationStack { ScrollView { VStack(alignment: .leading, spacing: 14) { HStack { Text("广场").font(.system(size: 29, weight: .bold)); Spacer(); Image(systemName: "magnifyingglass") }; Text("发现大家正在分享的内容").foregroundColor(.secondary); FilterRow(); ForEach(store.posts) { post in PostCard(post: post) } }.padding(18) }.background(Color(.systemGroupedBackground)) } } }
@@ -96,11 +98,14 @@ struct PostCard: View {
                 Spacer()
                 if post.authorID == store.user?.userID || store.user?.role == "admin" {
                     Button { store.delete(post) } label: { Image(systemName: "trash").font(.caption) }.foregroundColor(.secondary)
-                } else { Image(systemName: "ellipsis").foregroundColor(.secondary) }
+                } else {
+                    Image(systemName: "ellipsis").foregroundColor(.secondary)
+                }
             }
             Text(post.text)
             HStack(spacing: 24) {
                 Button { store.like(post) } label: { Label("\(post.likes)", systemImage: post.liked ? "heart.fill" : "heart") }.foregroundColor(post.liked ? .pink : .secondary)
+                Button { store.favorite(post) } label: { Label("收藏", systemImage: store.favorites.contains(post.id) ? "bookmark.fill" : "bookmark") }.foregroundColor(store.favorites.contains(post.id) ? .orange : .secondary)
                 Button { showComments = true } label: { Label("\(post.comments)", systemImage: "message") }.foregroundColor(.secondary)
                 Label("分享", systemImage: "arrowshape.turn.up.right")
             }.font(.caption).foregroundColor(.secondary)
