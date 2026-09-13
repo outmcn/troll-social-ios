@@ -81,28 +81,26 @@ struct HomeTab: View {
  }.padding(18) }.toolbar { ToolbarItem(placement: .topBarTrailing) { Image(systemName: "bell") } }.background(Color(.systemGroupedBackground)) } }
 }
 struct StoryRow: View { var body: some View { ScrollView(.horizontal, showsIndicators: false) { HStack(spacing: 14) { ForEach(["我的动态", "小岛日记", "像素研究所", "晚风"], id: \.self) { name in VStack(spacing: 6) { Circle().fill(.orange.opacity(0.2)).frame(width: 58, height: 58).overlay(Text(name.prefix(1)).font(.title2.bold()).foregroundColor(.orange)); Text(name).font(.caption) } } } } } }
-struct PlazaTab: View { @EnvironmentObject var store: SocialStore; var body: some View { NavigationStack { ScrollView { VStack(alignment: .leading, spacing: 14) { HStack { Text("广场").font(.system(size: 29, weight: .bold)); Spacer(); Image(systemName: "magnifyingglass") }; Text("发现大家正在分享的内容").foregroundColor(.secondary); FilterRow(); ForEach(store.posts) { post in PostCard(post: post, allowsDelete: false) } }.padding(18) }.background(Color(.systemGroupedBackground)) } } }
+struct PlazaTab: View { @EnvironmentObject var store: SocialStore; var body: some View { NavigationStack { ScrollView { VStack(alignment: .leading, spacing: 14) { HStack { Text("广场").font(.system(size: 29, weight: .bold)); Spacer(); Image(systemName: "magnifyingglass") }; Text("发现大家正在分享的内容").foregroundColor(.secondary); FilterRow(); ForEach(store.posts) { post in PostCard(post: post, allowsDelete: false, myMode: false) } }.padding(18) }.background(Color(.systemGroupedBackground)) } } }
 struct FilterRow: View { var body: some View { HStack { ForEach(["推荐", "关注", "生活", "兴趣"], id: \.self) { item in Text(item).font(.caption.bold()).padding(.horizontal, 13).padding(.vertical, 8).background(item == "推荐" ? Color.orange : Color(.tertiarySystemBackground)).foregroundColor(item == "推荐" ? .white : .primary).clipShape(Capsule()) } } } }
 struct PostCard: View {
     @EnvironmentObject var store: SocialStore
     let post: Post
     let allowsDelete: Bool
+    let myMode: Bool
+    @State private var confirmDelete = false
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack { Circle().fill(post.accent.opacity(0.2)).frame(width: 42, height: 42).overlay(Text(post.author.prefix(1)).bold().foregroundColor(post.accent)); VStack(alignment: .leading, spacing: 3) { Text(post.author).bold(); HStack(spacing: 5) { Text("ID：\(post.authorID)"); if !post.ipRegion.isEmpty { Text("·"); Text(post.ipRegion) } }.font(.caption).foregroundColor(.secondary); Text(post.time).font(.caption2).foregroundColor(.secondary) }; Spacer() }
+            HStack { Circle().fill(post.accent.opacity(0.2)).frame(width: 42, height: 42).overlay(Text(post.author.prefix(1)).bold().foregroundColor(post.accent)); VStack(alignment: .leading, spacing: 3) { Text(post.author).bold(); HStack(spacing: 5) { Text("ID：\(post.authorID)"); if !post.ipRegion.isEmpty { Text("·"); Text(post.ipRegion) } }.font(.caption).foregroundColor(.secondary); Text(post.time).font(.caption2).foregroundColor(.secondary) }; Spacer(); if myMode { actionsMenu } }
             Text(post.text).frame(maxWidth: .infinity, alignment: .leading)
-            Divider()
-            HStack(spacing: 3) {
-                Button { store.like(post) } label: { Label("\(post.likes)", systemImage: post.liked ? "heart.fill" : "heart") }.buttonStyle(.bordered).tint(post.liked ? .pink : .gray).frame(width: 52, height: 27)
-                Button { store.favorite(post) } label: { Label("\(post.favorites)", systemImage: store.favorites.contains(post.id) ? "bookmark.fill" : "bookmark") }.buttonStyle(.bordered).tint(store.favorites.contains(post.id) ? .orange : .gray).frame(width: 52, height: 27)
-                Button { store.selectedPost = post } label: { Label("\(post.comments)", systemImage: "message") }.buttonStyle(.bordered).tint(.gray).frame(width: 52, height: 27)
-                ShareLink(item: post.text) { Image(systemName: "arrowshape.turn.up.right") }.buttonStyle(.bordered).tint(.gray).frame(width: 52, height: 27)
-                if allowsDelete { Button { store.delete(post) } label: { Image(systemName: "trash") }.buttonStyle(.bordered).tint(.red).frame(width: 52, height: 27) }
-            }.font(.caption2).frame(maxWidth: .infinity, alignment: .center)
+            if !myMode { Divider(); publicActions }
         }
         .padding(15).background(Color(.secondarySystemBackground)).overlay(RoundedRectangle(cornerRadius: 18).stroke(Color(.separator).opacity(0.35), lineWidth: 0.7)).clipShape(RoundedRectangle(cornerRadius: 18))
         .sheet(item: $store.selectedPost) { selected in CommentsView(post: selected).environmentObject(store) }
+        .confirmationDialog("删除这条动态？", isPresented: $confirmDelete, titleVisibility: .visible) { Button("删除", role: .destructive) { store.delete(post) }; Button("取消", role: .cancel) { } }
     }
+    private var publicActions: some View { HStack(spacing: 3) { Button { store.like(post) } label: { Label("\(post.likes)", systemImage: post.liked ? "heart.fill" : "heart") }.buttonStyle(.bordered).tint(post.liked ? .pink : .gray).frame(width: 52, height: 27); Button { store.favorite(post) } label: { Label("\(post.favorites)", systemImage: store.favorites.contains(post.id) ? "bookmark.fill" : "bookmark") }.buttonStyle(.bordered).tint(store.favorites.contains(post.id) ? .orange : .gray).frame(width: 52, height: 27); Button { store.selectedPost = post } label: { Label("\(post.comments)", systemImage: "message") }.buttonStyle(.bordered).tint(.gray).frame(width: 52, height: 27); ShareLink(item: post.text) { Image(systemName: "arrowshape.turn.up.right") }.buttonStyle(.bordered).tint(.gray).frame(width: 52, height: 27); if allowsDelete { Button { store.delete(post) } label: { Image(systemName: "trash") }.buttonStyle(.bordered).tint(.red).frame(width: 52, height: 27) } }.font(.caption2).frame(maxWidth: .infinity, alignment: .center) }
+    private var actionsMenu: some View { Menu { Button { store.like(post) } label: { Label(post.liked ? "取消点赞" : "点赞", systemImage: post.liked ? "heart.fill" : "heart") }; Button { store.favorite(post) } label: { Label(store.favorites.contains(post.id) ? "取消收藏" : "收藏", systemImage: store.favorites.contains(post.id) ? "bookmark.fill" : "bookmark") }; Button { store.selectedPost = post } label: { Label("评论", systemImage: "message") }; ShareLink(item: post.text) { Label("分享", systemImage: "arrowshape.turn.up.right") }; if allowsDelete { Button(role: .destructive) { confirmDelete = true } label: { Label("删除动态", systemImage: "trash") } } } label: { Image(systemName: "ellipsis").font(.headline).frame(width: 32, height: 32).contentShape(Rectangle()) }.buttonStyle(.plain).foregroundColor(.secondary) }
 }
 
 struct CommentsView: View {
