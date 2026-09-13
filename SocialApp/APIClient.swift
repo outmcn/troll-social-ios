@@ -33,7 +33,25 @@ struct PublishBody: Encodable { let text: String }
 struct HealthResponse: Decodable { let ok: Bool }
 struct APIErrorResponse: Decodable { let error: String }
 struct BasicResponse: Decodable { let ok: Bool }
-struct User: Codable { let id: String; var username: String; var role: String; var bio: String = ""; var avatar: String = ""; enum CodingKeys: String, CodingKey { case id, username, role, bio, avatar } }
+struct User: Codable {
+    let id: String
+    var username: String
+    var role: String
+    var bio: String
+    var avatar: String
+    enum CodingKeys: String, CodingKey { case id, username, role, bio, avatar }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        username = try c.decode(String.self, forKey: .username)
+        role = try c.decode(String.self, forKey: .role)
+        bio = try c.decodeIfPresent(String.self, forKey: .bio) ?? ""
+        avatar = try c.decodeIfPresent(String.self, forKey: .avatar) ?? ""
+    }
+    init(id: String, username: String, role: String, bio: String = "", avatar: String = "") {
+        self.id = id; self.username = username; self.role = role; self.bio = bio; self.avatar = avatar
+    }
+}
 struct AuthResponse: Decodable { let token: String; let user: User }
 struct SessionResponse: Decodable { let user: User }
 struct RegisterResponse: Decodable { let user: User }
