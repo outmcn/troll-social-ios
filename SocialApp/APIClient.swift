@@ -47,7 +47,7 @@ struct AuthResponse: Decodable { let token: String; let user: User }
 struct SessionResponse: Decodable { let user: User }
 struct RegisterResponse: Decodable { let user: User }
 struct PostsResponse: Decodable { let posts: [RemotePost] }
-struct SinglePostResponse: Decodable { let post: RemotePost }
+struct SinglePostResponse: Decodable { let post: RemotePost; let liked: Bool?; let favorited: Bool? }
 struct CommentsResponse: Decodable { let comments: [RemoteComment] }
 struct RemoteComment: Codable, Identifiable { let id: String; let authorID: String; let text: String; let createdAt: String?; enum CodingKeys: String, CodingKey { case id; case authorID = "author_id"; case text; case createdAt = "created_at" } }
 struct RemotePost: Codable, Identifiable {

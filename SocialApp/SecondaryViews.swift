@@ -141,7 +141,12 @@ struct MeTab: View {
                     if mine.isEmpty { EmptyCategoryView(text: "还没有发布动态") }
                     else {
                         ForEach(mine) { post in
-                            PostCard(post: post, canDelete: true)
+                            VStack(alignment: .leading, spacing: 8) {
+                                PostCard(post: post)
+                                Button { store.delete(post) } label: { Label("删除动态", systemImage: "trash") }
+                                    .buttonStyle(.bordered)
+                                    .tint(.red)
+                            }
                         }
                     }
                 }

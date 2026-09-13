@@ -56,17 +56,21 @@ final class SocialStore: ObservableObject {
         } catch { toast = error.localizedDescription }
         isLoading = false
     }
-    func like(_ post: Post) { guard let token else { return }; Task { do { let result = try await api.like(postID: post.id.uuidString, token: token); if let i = posts.firstIndex(where: { $0.id == post.id }) { posts[i] = Post(remote: result.post, liked: !post.liked, favorite: post.favorited) } } catch { toast = error.localizedDescription } } }
+    func replacePost(_ remote: RemotePost, liked: Bool? = nil, favorited: Bool? = nil) {
+        guard let i = posts.firstIndex(where: { $0.id.uuidString.lowercased() == remote.id.lowercased() }) else { return }
+        posts[i] = Post(remote: remote, liked: liked ?? posts[i].liked, favorite: favorited ?? posts[i].favorited)
+    }
+    func like(_ post: Post) { guard let token else { toast = "登录状态已失效，请重新登录"; return }; Task { @MainActor in do { let result = try await api.like(postID: post.id.uuidString, token: token); replacePost(result.post, liked: result.liked ?? !post.liked); } catch { toast = "点赞失败：\(error.localizedDescription)" } } }
     func publish(_ text: String) { guard let token else { return }; let value = text.trimmingCharacters(in: .whitespacesAndNewlines); guard !value.isEmpty else { return }; Task { do { let result = try await api.publish(text: value, token: token); posts.insert(Post(remote: result.post), at: 0); showComposer = false; toast = "已发布到广场" } catch { toast = error.localizedDescription } } }
-    func comment(_ post: Post, text: String, completion: @escaping ([Comment]) -> Void) { guard let token else { return }; let value = text.trimmingCharacters(in: .whitespacesAndNewlines); guard !value.isEmpty else { return }; Task { do { let result = try await api.comment(postID: post.id.uuidString, text: value, token: token); posts = posts.map { $0.id == post.id ? Post(remote: result.post) : $0 }; let resultComments: CommentsResponse = try await api.comments(postID: post.id.uuidString, token: token); completion(resultComments.comments.map { Comment(remote: $0) }) } catch { toast = error.localizedDescription } } }
+    func comment(_ post: Post, text: String, completion: @escaping ([Comment]) -> Void) { guard let token else { toast = "登录状态已失效，请重新登录"; return }; let value = text.trimmingCharacters(in: .whitespacesAndNewlines); guard !value.isEmpty else { return }; Task { @MainActor in do { let result = try await api.comment(postID: post.id.uuidString, text: value, token: token); replacePost(result.post, liked: post.liked, favorited: post.favorited); let resultComments = try await api.comments(postID: post.id.uuidString, token: token); completion(resultComments.comments.map { Comment(remote: $0) }) } catch { toast = "评论失败：\(error.localizedDescription)" } } }
     func loadComments(for post: Post) async -> [Comment] { guard let token else { return [] }; do { let result = try await api.comments(postID: post.id.uuidString, token: token); return result.comments.map { Comment(remote: $0) } } catch { toast = error.localizedDescription; return [] } }
-    func favorite(_ post: Post) { guard let token else { return }; Task { do { let result = try await api.favorite(postID: post.id.uuidString, token: token); let isAdding = !favorites.contains(post.id); if let i = posts.firstIndex(where: { $0.id == post.id }) { posts[i] = Post(remote: result.post, liked: post.liked, favorite: isAdding) }; if isAdding { favorites.insert(post.id) } else { favorites.remove(post.id) } } catch { toast = error.localizedDescription } } }
+    func favorite(_ post: Post) { guard let token else { toast = "登录状态已失效，请重新登录"; return }; Task { @MainActor in do { let result = try await api.favorite(postID: post.id.uuidString, token: token); let adding = result.favorited ?? !favorites.contains(post.id); replacePost(result.post, liked: post.liked, favorited: adding); if adding { favorites.insert(post.id) } else { favorites.remove(post.id) } } catch { toast = "收藏失败：\(error.localizedDescription)" } } }
     func delete(_ post: Post) {
         guard let token else { toast = "登录状态已失效，请重新登录"; return }
         Task { @MainActor in
             do {
                 let _: BasicResponse = try await api.deletePost(postID: post.id.uuidString, token: token)
-                posts.removeAll { $0.id == post.id }
+                posts.removeAll { $0.id.uuidString.lowercased() == post.id.uuidString.lowercased() }
                 favorites.remove(post.id)
                 toast = "动态已删除"
             } catch { toast = "删除失败：\(error.localizedDescription)" }

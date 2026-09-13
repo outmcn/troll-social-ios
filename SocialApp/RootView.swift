@@ -85,9 +85,7 @@ struct FilterRow: View { var body: some View { HStack { ForEach(["推荐", "关�
 struct PostCard: View {
     @EnvironmentObject var store: SocialStore
     let post: Post
-    var canDelete = false
     @State private var showComments = false
-    @State private var confirmDelete = false
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -97,28 +95,21 @@ struct PostCard: View {
                     HStack(spacing: 5) { Text("ID：\(post.authorID)"); if !post.ipRegion.isEmpty { Text("·"); Text(post.ipRegion) } }.font(.caption).foregroundColor(.secondary)
                     Text(post.time).font(.caption2).foregroundColor(.secondary)
                 }
-                if canDelete {
-                    Spacer()
-                    Button { confirmDelete = true } label: { Image(systemName: "trash").font(.caption) }.foregroundColor(.red)
-                } else {
-                    Spacer()
-                }
+                Spacer()
             }
-            Text(post.text)
-            HStack(spacing: 24) {
-                Button { store.like(post) } label: { Label("\(post.likes)", systemImage: post.liked ? "heart.fill" : "heart") }.foregroundColor(post.liked ? .pink : .secondary)
-                Button { store.favorite(post) } label: { Label("收藏", systemImage: store.favorites.contains(post.id) ? "bookmark.fill" : "bookmark") }.foregroundColor(store.favorites.contains(post.id) ? .orange : .secondary)
-                Button { showComments = true } label: { Label("\(post.comments)", systemImage: "message") }.foregroundColor(.secondary)
-                Label("分享", systemImage: "arrowshape.turn.up.right")
-            }.font(.caption).foregroundColor(.secondary)
+            Text(post.text).frame(maxWidth: .infinity, alignment: .leading)
+            Divider()
+            HStack(spacing: 0) {
+                actionButton("\(post.likes)", post.liked ? "heart.fill" : "heart", post.liked ? .pink : .secondary) { store.like(post) }
+                actionButton("\(post.favorites)", store.favorites.contains(post.id) ? "bookmark.fill" : "bookmark", store.favorites.contains(post.id) ? .orange : .secondary) { store.favorite(post) }
+                actionButton("\(post.comments)", "message", .secondary) { showComments = true }
+                ShareLink(item: post.text) { Label("分享", systemImage: "arrowshape.turn.up.right").frame(maxWidth: .infinity).padding(.vertical, 10) }.buttonStyle(.plain).foregroundColor(.secondary)
+            }.font(.caption)
         }
         .padding(15).background(Color(.secondarySystemBackground)).overlay(RoundedRectangle(cornerRadius: 18).stroke(Color(.separator).opacity(0.35), lineWidth: 0.7)).clipShape(RoundedRectangle(cornerRadius: 18))
         .sheet(isPresented: $showComments) { CommentsView(post: post).environmentObject(store) }
-        .confirmationDialog("删除这条动态？", isPresented: $confirmDelete, titleVisibility: .visible) {
-            Button("删除", role: .destructive) { store.delete(post) }
-            Button("取消", role: .cancel) { }
-        }
     }
+    private func actionButton(_ title: String, _ icon: String, _ color: Color, action: @escaping () -> Void) -> some View { Button(action: action) { Label(title, systemImage: icon).frame(maxWidth: .infinity).padding(.vertical, 10).contentShape(Rectangle()) }.buttonStyle(.plain).foregroundColor(color) }
 }
 
 struct CommentsView: View {
