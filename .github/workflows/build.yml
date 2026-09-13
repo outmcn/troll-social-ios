@@ -1,0 +1,34 @@
+name: Build TrollSocial TrollStore IPA
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: xcodegen generate
+      - name: Build unsigned IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild build -project TrollSocial.xcodeproj -scheme TrollSocial \
+            -configuration Release -destination 'generic/platform=iOS' \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            IPHONEOS_DEPLOYMENT_TARGET=16.0 TARGETED_DEVICE_FAMILY=1
+          APP_PATH=$(find build/Build/Products -name 'TrollSocial.app' -type d | head -1)
+          test -x "$APP_PATH/TrollSocial"
+          test -f "$APP_PATH/Assets.car"
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+          /usr/bin/ditto -c -k --sequesterRsrc --keepParent Payload TrollSocial.ipa
+          unzip -l TrollSocial.ipa
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TrollSocial-TrollStore-IPA
+          path: TrollSocial.ipa
+          retention-days: 14
