@@ -85,35 +85,26 @@ struct FilterRow: View { var body: some View { HStack { ForEach(["推荐", "关�
 struct PostCard: View {
     @EnvironmentObject var store: SocialStore
     let post: Post
-    @State private var showComments = false
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Circle().fill(post.accent.opacity(0.2)).frame(width: 42, height: 42).overlay(Text(post.author.prefix(1)).bold().foregroundColor(post.accent))
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(post.author).bold()
-                    HStack(spacing: 5) { Text("ID：\(post.authorID)"); if !post.ipRegion.isEmpty { Text("·"); Text(post.ipRegion) } }.font(.caption).foregroundColor(.secondary)
-                    Text(post.time).font(.caption2).foregroundColor(.secondary)
-                }
-                Spacer()
-            }
+            HStack { Circle().fill(post.accent.opacity(0.2)).frame(width: 42, height: 42).overlay(Text(post.author.prefix(1)).bold().foregroundColor(post.accent)); VStack(alignment: .leading, spacing: 3) { Text(post.author).bold(); HStack(spacing: 5) { Text("ID：\(post.authorID)"); if !post.ipRegion.isEmpty { Text("·"); Text(post.ipRegion) } }.font(.caption).foregroundColor(.secondary); Text(post.time).font(.caption2).foregroundColor(.secondary) }; Spacer() }
             Text(post.text).frame(maxWidth: .infinity, alignment: .leading)
             Divider()
             HStack(spacing: 0) {
                 actionButton("\(post.likes)", post.liked ? "heart.fill" : "heart", post.liked ? .pink : .secondary) { store.like(post) }
                 actionButton("\(post.favorites)", store.favorites.contains(post.id) ? "bookmark.fill" : "bookmark", store.favorites.contains(post.id) ? .orange : .secondary) { store.favorite(post) }
-                actionButton("\(post.comments)", "message", .secondary) { showComments = true }
+                NavigationLink { CommentsView(post: post).environmentObject(store) } label: { Label("\(post.comments)", systemImage: "message").frame(maxWidth: .infinity).padding(.vertical, 10) }.buttonStyle(.plain).foregroundColor(.secondary)
                 ShareLink(item: post.text) { Label("分享", systemImage: "arrowshape.turn.up.right").frame(maxWidth: .infinity).padding(.vertical, 10) }.buttonStyle(.plain).foregroundColor(.secondary)
             }.font(.caption)
         }
         .padding(15).background(Color(.secondarySystemBackground)).overlay(RoundedRectangle(cornerRadius: 18).stroke(Color(.separator).opacity(0.35), lineWidth: 0.7)).clipShape(RoundedRectangle(cornerRadius: 18))
-        .sheet(isPresented: $showComments) { CommentsView(post: post).environmentObject(store) }
     }
-    private func actionButton(_ title: String, _ icon: String, _ color: Color, action: @escaping () -> Void) -> some View { Button(action: action) { Label(title, systemImage: icon).frame(maxWidth: .infinity).padding(.vertical, 10).contentShape(Rectangle()) }.buttonStyle(.plain).foregroundColor(color) }
+    private func actionButton(_ title: String, _ icon: String, _ color: Color, action: @escaping () -> Void) -> some View { Button(action: action) { Label(title, systemImage: icon).frame(maxWidth: .infinity).padding(.vertical, 10).contentShape(Rectangle()) }.buttonStyle(.borderless).foregroundColor(color) }
 }
 
 struct CommentsView: View {
     @EnvironmentObject var store: SocialStore
+    @Environment(\.dismiss) private var dismiss
     let post: Post
     @State private var comments: [Comment] = []
     @State private var text = ""
@@ -124,7 +115,7 @@ struct CommentsView: View {
                 if loading { ProgressView() }
                 else if comments.isEmpty { Text("还没有评论").foregroundColor(.secondary).padding(.top, 35); Spacer() }
                 else { List(comments) { c in VStack(alignment: .leading, spacing: 4) { Text("ID：\(c.authorID)").font(.caption).foregroundColor(.secondary); Text(c.text) } } }
-                HStack { TextField("说点什么...", text: $text).textFieldStyle(.roundedBorder); Button("发送") { store.comment(post, text: text) { comments = $0; text = "" } }.disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) }.padding()
+                HStack { TextField("说点什么...", text: $text).textFieldStyle(.roundedBorder); Button { let value = text; text = ""; store.comment(post, text: value) { comments = $0 } } label: { Image(systemName: "paperplane.fill") }.buttonStyle(.borderedProminent).tint(.orange).disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) }.padding()
             }.navigationTitle("评论").navigationBarTitleDisplayMode(.inline).task { comments = await store.loadComments(for: post); loading = false }
         }
     }

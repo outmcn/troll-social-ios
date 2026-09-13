@@ -70,8 +70,7 @@ final class SocialStore: ObservableObject {
         Task { @MainActor in
             do {
                 let _: BasicResponse = try await api.deletePost(postID: post.id.uuidString, token: token)
-                posts.removeAll { $0.id.uuidString.lowercased() == post.id.uuidString.lowercased() }
-                favorites.remove(post.id)
+                await loadContent()
                 toast = "动态已删除"
             } catch { toast = "删除失败：\(error.localizedDescription)" }
         }
