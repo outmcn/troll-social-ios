@@ -109,7 +109,7 @@ struct MeTab: View {
                         Image(systemName: "pencil").font(.caption.bold()).foregroundColor(.orange)
                     }
                 }
-                Text("@\(store.user?.username ?? "user")").font(.subheadline).foregroundColor(.secondary)
+                Text("ID：\(store.user?.userID ?? "--------")").font(.caption).foregroundColor(.secondary)
                 Text(store.user?.bio.isEmpty == false ? store.user!.bio : "分享生活，保持好奇")
                     .font(.caption).foregroundColor(.secondary)
             }
