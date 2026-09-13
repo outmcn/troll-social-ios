@@ -73,7 +73,6 @@ struct MeTab: View {
             ScrollView {
                 VStack(spacing: 18) {
                     profileHeader
-                    ipRegion
                     categoryPicker
                     categoryContent
                 }
@@ -95,44 +94,28 @@ struct MeTab: View {
     }
 
     private var profileHeader: some View {
-        HStack(spacing: 14) {
-            Circle()
-                .fill(.orange.opacity(0.2))
-                .frame(width: 78, height: 78)
-                .overlay(Text(store.avatarSymbol).font(.system(size: 36)))
-            VStack(alignment: .leading, spacing: 5) {
-                HStack(spacing: 8) {
-                    Text(store.user?.displayName.isEmpty == false ? store.user!.displayName : "未设置").font(.title2.bold())
-                    NavigationLink {
-                        ProfileView().environmentObject(store)
-                    } label: {
-                        Image(systemName: "pencil").font(.caption.bold()).foregroundColor(.orange)
+                HStack(alignment: .top, spacing: 14) {
+                    Circle()
+                        .fill(.orange.opacity(0.2))
+                        .frame(width: 78, height: 78)
+                        .overlay(Text(store.avatarSymbol).font(.system(size: 36)))
+                    VStack(alignment: .leading, spacing: 5) {
+                        HStack(spacing: 8) {
+                            Text(store.user?.displayName.isEmpty == false ? store.user!.displayName : "未设置").font(.title2.bold())
+                            NavigationLink { ProfileView().environmentObject(store) } label: { Image(systemName: "pencil").font(.caption.bold()).foregroundColor(.orange) }
+                        }
+                        Text("ID：\(store.user?.userID ?? "--------")").font(.caption).foregroundColor(.secondary)
+                        Text(store.user?.bio.isEmpty == false ? store.user!.bio : "分享生活，保持好奇").font(.caption).foregroundColor(.secondary)
+                        HStack(spacing: 5) {
+                            Image(systemName: "mappin.and.ellipse").foregroundColor(.orange)
+                            Text("IP属地：\(store.user?.ipRegion.isEmpty == false ? store.user!.ipRegion : "未知")")
+                        }.font(.caption).foregroundColor(.secondary)
                     }
+                    Spacer()
                 }
-                Text("ID：\(store.user?.userID ?? "--------")").font(.caption).foregroundColor(.secondary)
-                Text(store.user?.bio.isEmpty == false ? store.user!.bio : "分享生活，保持好奇")
-                    .font(.caption).foregroundColor(.secondary)
-            }
-            Spacer()
-        }
-        .padding(16)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 18))
-    }
-
-    private var ipRegion: some View {
-        HStack {
-            Image(systemName: "mappin.and.ellipse").foregroundColor(.orange)
-            Text("IP属地")
-            Spacer()
-            Text(store.user?.ipRegion.isEmpty == false ? store.user!.ipRegion : "未知")
-                .foregroundColor(.secondary)
-        }
-        .font(.subheadline)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 13)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+                .padding(16)
+                .background(Color(.secondarySystemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 18))
     }
 
     private var categoryPicker: some View {
