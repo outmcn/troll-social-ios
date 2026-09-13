@@ -19,7 +19,7 @@ struct APIClient {
     func login(username: String, password: String) async throws -> AuthResponse { try await send("api/auth/login", method: "POST", body: JSONEncoder().encode(Credentials(username: username, password: password))) }
     func register(username: String, password: String) async throws -> RegisterResponse { try await send("api/auth/register", method: "POST", body: JSONEncoder().encode(Credentials(username: username, password: password))) }
     func session(token: String) async throws -> SessionResponse { try await send("api/auth/me", token: token) }
-    func updateProfile(username: String, bio: String, avatar: String, token: String) async throws -> SessionResponse { try await send("api/auth/profile", method: "PUT", token: token, body: JSONEncoder().encode(ProfileBody(username: username, bio: bio, avatar: avatar))) }
+    func updateProfile(username: String, bio: String, avatar: String, ipRegion: String, token: String) async throws -> SessionResponse { try await send("api/auth/profile", method: "PUT", token: token, body: JSONEncoder().encode(ProfileBody(username: username, bio: bio, avatar: avatar, ipRegion: ipRegion))) }
     func changePassword(oldPassword: String, newPassword: String, token: String) async throws -> BasicResponse { try await send("api/auth/password", method: "PUT", token: token, body: JSONEncoder().encode(PasswordBody(oldPassword: oldPassword, newPassword: newPassword))) }
     func posts(token: String) async throws -> PostsResponse { try await send("api/posts", token: token) }
     func publish(text: String, token: String) async throws -> SinglePostResponse { try await send("api/posts", method: "POST", token: token, body: JSONEncoder().encode(PublishBody(text: text))) }
@@ -27,7 +27,7 @@ struct APIClient {
     func chats(token: String) async throws -> ChatsResponse { try await send("api/chats", token: token) }
 }
 struct Credentials: Encodable { let username: String; let password: String }
-struct ProfileBody: Encodable { let username: String; let bio: String; let avatar: String }
+struct ProfileBody: Encodable { let username: String; let bio: String; let avatar: String; let ipRegion: String; enum CodingKeys: String, CodingKey { case username, bio, avatar; case ipRegion = "ip_region" } }
 struct PasswordBody: Encodable { let oldPassword: String; let newPassword: String; enum CodingKeys: String, CodingKey { case oldPassword = "old_password"; case newPassword = "new_password" } }
 struct PublishBody: Encodable { let text: String }
 struct HealthResponse: Decodable { let ok: Bool }
@@ -39,18 +39,14 @@ struct User: Codable {
     var role: String
     var bio: String
     var avatar: String
-    enum CodingKeys: String, CodingKey { case id, username, role, bio, avatar }
+    var ipRegion: String
+    enum CodingKeys: String, CodingKey { case id, username, role, bio, avatar; case ipRegion = "ip_region" }
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        id = try c.decode(String.self, forKey: .id)
-        username = try c.decode(String.self, forKey: .username)
-        role = try c.decode(String.self, forKey: .role)
-        bio = try c.decodeIfPresent(String.self, forKey: .bio) ?? ""
-        avatar = try c.decodeIfPresent(String.self, forKey: .avatar) ?? ""
+        id = try c.decode(String.self, forKey: .id); username = try c.decode(String.self, forKey: .username); role = try c.decode(String.self, forKey: .role)
+        bio = try c.decodeIfPresent(String.self, forKey: .bio) ?? ""; avatar = try c.decodeIfPresent(String.self, forKey: .avatar) ?? ""; ipRegion = try c.decodeIfPresent(String.self, forKey: .ipRegion) ?? "未知"
     }
-    init(id: String, username: String, role: String, bio: String = "", avatar: String = "") {
-        self.id = id; self.username = username; self.role = role; self.bio = bio; self.avatar = avatar
-    }
+    init(id: String, username: String, role: String, bio: String = "", avatar: String = "", ipRegion: String = "未知") { self.id = id; self.username = username; self.role = role; self.bio = bio; self.avatar = avatar; self.ipRegion = ipRegion }
 }
 struct AuthResponse: Decodable { let token: String; let user: User }
 struct SessionResponse: Decodable { let user: User }

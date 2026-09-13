@@ -23,6 +23,7 @@ struct ProfileView: View {
     @State private var username = ""
     @State private var bio = ""
     @State private var avatar = "sun"
+    @State private var ipRegion = ""
     @State private var message = ""
     @State private var saving = false
 
@@ -51,13 +52,14 @@ struct ProfileView: View {
             Section("个人资料") {
                 TextField("用户名", text: $username).textInputAutocapitalization(.never).autocorrectionDisabled()
                 TextField("个人简介", text: $bio, axis: .vertical).lineLimit(3...5)
+                TextField("IP属地（可选）", text: $ipRegion)
             }
             if !message.isEmpty { Section { Text(message).foregroundColor(.orange) } }
             Section {
                 Button(saving ? "保存中..." : "保存资料") {
                     saving = true
                     Task {
-                        let ok = await store.updateProfile(username: username, bio: bio, avatar: avatar)
+                        let ok = await store.updateProfile(username: username, bio: bio, avatar: avatar, ipRegion: ipRegion)
                         message = ok ? "资料已保存" : store.toast
                         saving = false
                     }
@@ -70,6 +72,7 @@ struct ProfileView: View {
             username = store.user?.username ?? ""
             bio = store.user?.bio ?? ""
             avatar = AvatarOption.all.contains { $0.id == store.user?.avatar } ? (store.user?.avatar ?? "sun") : "sun"
+            ipRegion = store.user?.ipRegion ?? ""
         }
     }
 
