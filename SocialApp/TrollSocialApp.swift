@@ -51,6 +51,7 @@ final class SocialStore: ObservableObject {
         do {
             let result = try await api.posts(token: token)
             posts = result.posts.map { Post(remote: $0) }
+            favorites = Set(posts.filter(\.favorited).map(\.id))
             let chatResult = try await api.chats(token: token)
             chats = chatResult.chats.map { Chat(remote: $0) }
         } catch { toast = error.localizedDescription }
@@ -80,7 +81,7 @@ final class SocialStore: ObservableObject {
 }
 
 struct Post: Identifiable { let id: UUID; let remoteID: String; var author: String; var handle: String; var authorID: String; var ipRegion: String; var time: String; var text: String; var likes: Int; var comments: Int; var favorites: Int; var liked: Bool; var favorited: Bool; var accent: Color
-    init(remote: RemotePost, liked: Bool = false, favorite: Bool = false) { remoteID = remote.id; id = UUID(uuidString: remote.id) ?? UUID(); author = remote.author; handle = remote.handle; authorID = remote.authorID; ipRegion = remote.ipRegion; time = "刚刚"; text = remote.text; likes = remote.likes; comments = remote.comments; favorites = remote.favorites; self.liked = liked; favorited = favorite; accent = .orange }
+    init(remote: RemotePost, liked: Bool? = nil, favorite: Bool? = nil) { remoteID = remote.id; id = UUID(uuidString: remote.id) ?? UUID(); author = remote.author; handle = remote.handle; authorID = remote.authorID; ipRegion = remote.ipRegion; time = "刚刚"; text = remote.text; likes = remote.likes; comments = remote.comments; favorites = remote.favorites; self.liked = liked ?? remote.liked; favorited = favorite ?? remote.favorited; accent = .orange }
 }
 
 struct Comment: Identifiable { let id: String; let authorID: String; let text: String; let time: String

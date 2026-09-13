@@ -151,9 +151,13 @@ struct MeTab: View {
                     }
                 }
             } else if category == 1 {
-                EmptyCategoryView(text: "还没有收藏内容")
+                let mineFavorites = store.posts.filter { store.favorites.contains($0.id) || $0.favorited }
+                if mineFavorites.isEmpty { EmptyCategoryView(text: "还没有收藏内容") }
+                else { ForEach(mineFavorites) { PostCard(post: $0) } }
             } else {
-                EmptyCategoryView(text: "还没有点赞内容")
+                let mineLikes = store.posts.filter { $0.liked }
+                if mineLikes.isEmpty { EmptyCategoryView(text: "还没有点赞内容") }
+                else { ForEach(mineLikes) { PostCard(post: $0) } }
             }
         }
     }
