@@ -85,7 +85,9 @@ struct FilterRow: View { var body: some View { HStack { ForEach(["推荐", "关�
 struct PostCard: View {
     @EnvironmentObject var store: SocialStore
     let post: Post
+    var canDelete = false
     @State private var showComments = false
+    @State private var confirmDelete = false
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -96,8 +98,8 @@ struct PostCard: View {
                     Text(post.time).font(.caption2).foregroundColor(.secondary)
                 }
                 Spacer()
-                if post.authorID == store.user?.userID || store.user?.role == "admin" {
-                    Button { store.delete(post) } label: { Image(systemName: "trash").font(.caption) }.foregroundColor(.secondary)
+                if canDelete {
+                    Button { confirmDelete = true } label: { Image(systemName: "trash").font(.caption) }.foregroundColor(.red)
                 } else {
                     Image(systemName: "ellipsis").foregroundColor(.secondary)
                 }
@@ -112,6 +114,10 @@ struct PostCard: View {
         }
         .padding(15).background(Color(.secondarySystemBackground)).overlay(RoundedRectangle(cornerRadius: 18).stroke(Color(.separator).opacity(0.35), lineWidth: 0.7)).clipShape(RoundedRectangle(cornerRadius: 18))
         .sheet(isPresented: $showComments) { CommentsView(post: post).environmentObject(store) }
+        .confirmationDialog("删除这条动态？", isPresented: $confirmDelete, titleVisibility: .visible) {
+            Button("删除", role: .destructive) { store.delete(post) }
+            Button("取消", role: .cancel) { }
+        }
     }
 }
 

@@ -136,7 +136,7 @@ struct MeTab: View {
         VStack(alignment: .leading, spacing: 12) {
             if category == 0 {
                 if store.posts.isEmpty { EmptyCategoryView(text: "还没有发布动态") }
-                else { ForEach(store.posts) { PostCard(post: $0) } }
+                else { ForEach(store.posts) { PostCard(post: $0, canDelete: true) } }
             } else if category == 1 {
                 EmptyCategoryView(text: "还没有收藏内容")
             } else {
