@@ -57,28 +57,30 @@ final class SocialStore: ObservableObject {
         isLoading = false
     }
     func replacePost(_ remote: RemotePost, liked: Bool? = nil, favorited: Bool? = nil) {
-        guard let i = posts.firstIndex(where: { $0.id.uuidString.lowercased() == remote.id.lowercased() }) else { return }
+        guard let i = posts.firstIndex(where: { $0.remoteID == remote.id }) else { return }
         posts[i] = Post(remote: remote, liked: liked ?? posts[i].liked, favorite: favorited ?? posts[i].favorited)
     }
-    func like(_ post: Post) { guard let token else { toast = "登录状态已失效，请重新登录"; return }; Task { @MainActor in do { let result = try await api.like(postID: post.id.uuidString, token: token); replacePost(result.post, liked: result.liked ?? !post.liked); } catch { toast = "点赞失败：\(error.localizedDescription)" } } }
+    func like(_ post: Post) { guard let token else { toast = "登录状态已失效，请重新登录"; return }; Task { @MainActor in do { let result = try await api.like(postID: post.remoteID, token: token); replacePost(result.post, liked: result.liked ?? !post.liked); } catch { toast = "点赞失败：\(error.localizedDescription)" } } }
     func publish(_ text: String) { guard let token else { return }; let value = text.trimmingCharacters(in: .whitespacesAndNewlines); guard !value.isEmpty else { return }; Task { do { let result = try await api.publish(text: value, token: token); posts.insert(Post(remote: result.post), at: 0); showComposer = false; toast = "已发布到广场" } catch { toast = error.localizedDescription } } }
-    func comment(_ post: Post, text: String, completion: @escaping ([Comment]) -> Void) { guard let token else { toast = "登录状态已失效，请重新登录"; return }; let value = text.trimmingCharacters(in: .whitespacesAndNewlines); guard !value.isEmpty else { return }; Task { @MainActor in do { let result = try await api.comment(postID: post.id.uuidString, text: value, token: token); replacePost(result.post, liked: post.liked, favorited: post.favorited); let resultComments = try await api.comments(postID: post.id.uuidString, token: token); completion(resultComments.comments.map { Comment(remote: $0) }) } catch { toast = "评论失败：\(error.localizedDescription)" } } }
-    func loadComments(for post: Post) async -> [Comment] { guard let token else { return [] }; do { let result = try await api.comments(postID: post.id.uuidString, token: token); return result.comments.map { Comment(remote: $0) } } catch { toast = error.localizedDescription; return [] } }
-    func favorite(_ post: Post) { guard let token else { toast = "登录状态已失效，请重新登录"; return }; Task { @MainActor in do { let result = try await api.favorite(postID: post.id.uuidString, token: token); let adding = result.favorited ?? !favorites.contains(post.id); replacePost(result.post, liked: post.liked, favorited: adding); if adding { favorites.insert(post.id) } else { favorites.remove(post.id) } } catch { toast = "收藏失败：\(error.localizedDescription)" } } }
+    func comment(_ post: Post, text: String, completion: @escaping ([Comment]) -> Void) { guard let token else { toast = "登录状态已失效，请重新登录"; return }; let value = text.trimmingCharacters(in: .whitespacesAndNewlines); guard !value.isEmpty else { return }; Task { @MainActor in do { let result = try await api.comment(postID: post.remoteID, text: value, token: token); replacePost(result.post, liked: post.liked, favorited: post.favorited); let resultComments = try await api.comments(postID: post.remoteID, token: token); completion(resultComments.comments.map { Comment(remote: $0) }) } catch { toast = "评论失败：\(error.localizedDescription)" } } }
+    func loadComments(for post: Post) async -> [Comment] { guard let token else { return [] }; do { let result = try await api.comments(postID: post.remoteID, token: token); return result.comments.map { Comment(remote: $0) } } catch { toast = error.localizedDescription; return [] } }
+    func favorite(_ post: Post) { guard let token else { toast = "登录状态已失效，请重新登录"; return }; Task { @MainActor in do { let result = try await api.favorite(postID: post.remoteID, token: token); let adding = result.favorited ?? !favorites.contains(post.id); replacePost(result.post, liked: post.liked, favorited: adding); if adding { favorites.insert(post.id) } else { favorites.remove(post.id) } } catch { toast = "收藏失败：\(error.localizedDescription)" } } }
     func delete(_ post: Post) {
         guard let token else { toast = "登录状态已失效，请重新登录"; return }
         Task { @MainActor in
             do {
-                let _: BasicResponse = try await api.deletePost(postID: post.id.uuidString, token: token)
-                await loadContent()
+                let _: BasicResponse = try await api.deletePost(postID: post.remoteID, token: token)
+                posts.removeAll { $0.id.uuidString.lowercased() == post.id.uuidString.lowercased() }
+                favorites.remove(post.id)
+                selectedPost = nil
                 toast = "动态已删除"
             } catch { toast = "删除失败：\(error.localizedDescription)" }
         }
     }
 }
 
-struct Post: Identifiable { let id: UUID; var author: String; var handle: String; var authorID: String; var ipRegion: String; var time: String; var text: String; var likes: Int; var comments: Int; var favorites: Int; var liked: Bool; var favorited: Bool; var accent: Color
-    init(remote: RemotePost, liked: Bool = false, favorite: Bool = false) { id = UUID(uuidString: remote.id) ?? UUID(); author = remote.author; handle = remote.handle; authorID = remote.authorID; ipRegion = remote.ipRegion; time = "刚刚"; text = remote.text; likes = remote.likes; comments = remote.comments; favorites = remote.favorites; self.liked = liked; favorited = favorite; accent = .orange }
+struct Post: Identifiable { let id: UUID; let remoteID: String; var author: String; var handle: String; var authorID: String; var ipRegion: String; var time: String; var text: String; var likes: Int; var comments: Int; var favorites: Int; var liked: Bool; var favorited: Bool; var accent: Color
+    init(remote: RemotePost, liked: Bool = false, favorite: Bool = false) { remoteID = remote.id; id = UUID(uuidString: remote.id) ?? UUID(); author = remote.author; handle = remote.handle; authorID = remote.authorID; ipRegion = remote.ipRegion; time = "刚刚"; text = remote.text; likes = remote.likes; comments = remote.comments; favorites = remote.favorites; self.liked = liked; favorited = favorite; accent = .orange }
 }
 
 struct Comment: Identifiable { let id: String; let authorID: String; let text: String; let time: String

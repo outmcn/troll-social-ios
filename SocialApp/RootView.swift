@@ -14,6 +14,7 @@ struct RootView: View {
         }
         .preferredColorScheme(nil)
         .background(Color(.systemBackground))
+        .alert("操作提示", isPresented: Binding(get: { !store.toast.isEmpty }, set: { if !$0 { store.toast = "" } })) { Button("确定") { store.toast = "" } } message: { Text(store.toast) }
         .sheet(isPresented: $store.showComposer) { ComposerView().environmentObject(store) }
     }
     private var mainView: some View {
@@ -90,16 +91,16 @@ struct PostCard: View {
             HStack { Circle().fill(post.accent.opacity(0.2)).frame(width: 42, height: 42).overlay(Text(post.author.prefix(1)).bold().foregroundColor(post.accent)); VStack(alignment: .leading, spacing: 3) { Text(post.author).bold(); HStack(spacing: 5) { Text("ID：\(post.authorID)"); if !post.ipRegion.isEmpty { Text("·"); Text(post.ipRegion) } }.font(.caption).foregroundColor(.secondary); Text(post.time).font(.caption2).foregroundColor(.secondary) }; Spacer() }
             Text(post.text).frame(maxWidth: .infinity, alignment: .leading)
             Divider()
-            HStack(spacing: 0) {
-                actionButton("\(post.likes)", post.liked ? "heart.fill" : "heart", post.liked ? .pink : .secondary) { store.like(post) }
-                actionButton("\(post.favorites)", store.favorites.contains(post.id) ? "bookmark.fill" : "bookmark", store.favorites.contains(post.id) ? .orange : .secondary) { store.favorite(post) }
-                NavigationLink { CommentsView(post: post).environmentObject(store) } label: { Label("\(post.comments)", systemImage: "message").frame(maxWidth: .infinity).padding(.vertical, 10) }.buttonStyle(.plain).foregroundColor(.secondary)
-                ShareLink(item: post.text) { Label("分享", systemImage: "arrowshape.turn.up.right").frame(maxWidth: .infinity).padding(.vertical, 10) }.buttonStyle(.plain).foregroundColor(.secondary)
+            HStack(spacing: 6) {
+                Button { store.like(post) } label: { Label("\(post.likes)", systemImage: post.liked ? "heart.fill" : "heart").frame(maxWidth: .infinity).padding(.vertical, 11) }.buttonStyle(.bordered).tint(post.liked ? .pink : .gray)
+                Button { store.favorite(post) } label: { Label("\(post.favorites)", systemImage: store.favorites.contains(post.id) ? "bookmark.fill" : "bookmark").frame(maxWidth: .infinity).padding(.vertical, 11) }.buttonStyle(.bordered).tint(store.favorites.contains(post.id) ? .orange : .gray)
+                Button { store.selectedPost = post } label: { Label("\(post.comments)", systemImage: "message").frame(maxWidth: .infinity).padding(.vertical, 11) }.buttonStyle(.bordered).tint(.gray)
+                ShareLink(item: post.text) { Label("分享", systemImage: "arrowshape.turn.up.right").frame(maxWidth: .infinity).padding(.vertical, 11) }.buttonStyle(.bordered).tint(.gray)
             }.font(.caption)
         }
         .padding(15).background(Color(.secondarySystemBackground)).overlay(RoundedRectangle(cornerRadius: 18).stroke(Color(.separator).opacity(0.35), lineWidth: 0.7)).clipShape(RoundedRectangle(cornerRadius: 18))
+        .sheet(item: $store.selectedPost) { selected in CommentsView(post: selected).environmentObject(store) }
     }
-    private func actionButton(_ title: String, _ icon: String, _ color: Color, action: @escaping () -> Void) -> some View { Button(action: action) { Label(title, systemImage: icon).frame(maxWidth: .infinity).padding(.vertical, 10).contentShape(Rectangle()) }.buttonStyle(.borderless).foregroundColor(color) }
 }
 
 struct CommentsView: View {
