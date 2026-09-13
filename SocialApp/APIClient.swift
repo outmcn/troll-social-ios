@@ -51,7 +51,30 @@ struct SessionResponse: Decodable { let user: User }
 struct RegisterResponse: Decodable { let user: User }
 struct PostsResponse: Decodable { let posts: [RemotePost] }
 struct SinglePostResponse: Decodable { let post: RemotePost }
-struct RemotePost: Codable, Identifiable { let id: String; let author: String; let handle: String; let authorID: String; let ipRegion: String; let text: String; var likes: Int; let comments: Int; let createdAt: String?; enum CodingKeys: String, CodingKey { case id, author, handle; case authorID = "author_id"; case ipRegion = "ip_region"; case text, likes, comments; case createdAt = "created_at"; init(from decoder: Decoder) throws { let c = try decoder.container(keyedBy: CodingKeys.self); id = try c.decode(String.self, forKey: .id); author = try c.decode(String.self, forKey: .author); handle = try c.decodeIfPresent(String.self, forKey: .handle) ?? ""; authorID = try c.decodeIfPresent(String.self, forKey: .authorID) ?? ""; ipRegion = try c.decodeIfPresent(String.self, forKey: .ipRegion) ?? ""; text = try c.decode(String.self, forKey: .text); likes = try c.decode(Int.self, forKey: .likes); comments = try c.decode(Int.self, forKey: .comments); createdAt = try c.decodeIfPresent(String.self, forKey: .createdAt) } }
+struct RemotePost: Codable, Identifiable {
+    let id: String
+    let author: String
+    let handle: String
+    let authorID: String
+    let ipRegion: String
+    let text: String
+    var likes: Int
+    let comments: Int
+    let createdAt: String?
+    enum CodingKeys: String, CodingKey { case id, author, handle; case authorID = "author_id"; case ipRegion = "ip_region"; case text, likes, comments; case createdAt = "created_at" }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        author = try c.decode(String.self, forKey: .author)
+        handle = try c.decodeIfPresent(String.self, forKey: .handle) ?? ""
+        authorID = try c.decodeIfPresent(String.self, forKey: .authorID) ?? ""
+        ipRegion = try c.decodeIfPresent(String.self, forKey: .ipRegion) ?? ""
+        text = try c.decode(String.self, forKey: .text)
+        likes = try c.decode(Int.self, forKey: .likes)
+        comments = try c.decode(Int.self, forKey: .comments)
+        createdAt = try c.decodeIfPresent(String.self, forKey: .createdAt)
+    }
+}
 struct ChatsResponse: Decodable { let chats: [RemoteChat] }
 struct RemoteChat: Codable, Identifiable { let id: String; let name: String; let message: String; let time: String; let unread: Int }
 enum APIError: Error, LocalizedError { case badResponse; case message(String); var errorDescription: String? { if case .message(let value) = self { return value }; return "网络请求失败" } }
