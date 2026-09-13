@@ -22,7 +22,7 @@ targets:
       path: SocialApp/Info.plist
       properties:
         CFBundleDisplayName: TrollSocial
-        CFBundleShortVersionString: "1.0.5"
-        CFBundleVersion: "24"
+        CFBundleShortVersionString: "1.0.6"
+        CFBundleVersion: "25"
         LSRequiresIPhoneOS: true
         UILaunchScreen: {}
