@@ -22,8 +22,8 @@ struct ChatTab: View {
                     }
                 }
             }
-            .navigationTitle("聊天")
-        }
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)        }
     }
 }
 
@@ -80,7 +80,8 @@ struct MeTab: View {
                 .padding(.bottom, 20)
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("我的")
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {
