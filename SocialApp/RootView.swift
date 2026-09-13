@@ -36,3 +36,4 @@ struct PostCard: View {
     @EnvironmentObject private var store: SocialStore; let post: Post
     var body: some View { VStack(alignment: .leading, spacing: 12) { HStack { Circle().fill(post.accent.opacity(0.2)).frame(width: 42, height: 42).overlay(Text(post.author.prefix(1)).bold().foregroundColor(post.accent)); VStack(alignment: .leading) { Text(post.author).bold(); Text("\(post.handle) · \(post.time)").font(.caption).foregroundColor(.secondary) }; Spacer(); Image(systemName: "ellipsis") .foregroundColor(.secondary) }; Text(post.text).font(.body); HStack(spacing: 24) { Button { store.like(post) } label: { Label("\(post.likes)", systemImage: post.liked ? "heart.fill" : "heart") }.foregroundColor(post.liked ? .pink : .secondary); Label("\(post.comments)", systemImage: "message"); Label("分享", systemImage: "arrowshape.turn.up.right") }.font(.caption).foregroundColor(.secondary) }.padding(15).background(.white).clipShape(RoundedRectangle(cornerRadius: 18)) }
 }
+}
