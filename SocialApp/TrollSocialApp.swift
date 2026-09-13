@@ -30,9 +30,9 @@ final class SocialStore: ObservableObject {
     func login(username: String, password: String) async -> Bool {
         do { let response = try await api.login(username: username, password: password); UserDefaults.standard.set(response.token, forKey: tokenKey); user = response.user; await loadContent(); return true } catch { toast = error.localizedDescription; return false }
     }
-    func updateProfile(username: String, bio: String, avatar: String, ipRegion: String) async -> Bool {
+    func updateProfile(displayName: String, bio: String, avatar: String, ipRegion: String) async -> Bool {
         guard let token else { return false }
-        do { let response = try await api.updateProfile(username: username, bio: bio, avatar: avatar, ipRegion: ipRegion, token: token); user = response.user; toast = "资料已保存"; return true } catch { toast = error.localizedDescription; return false }
+        do { let response = try await api.updateProfile(displayName: displayName, bio: bio, avatar: avatar, ipRegion: ipRegion, token: token); user = response.user; toast = "资料已保存"; return true } catch { toast = error.localizedDescription; return false }
     }
     func changePassword(oldPassword: String, newPassword: String) async -> Bool {
         guard let token else { return false }

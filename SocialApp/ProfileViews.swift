@@ -20,7 +20,7 @@ struct AvatarOption: Identifiable {
 
 struct ProfileView: View {
     @EnvironmentObject var store: SocialStore
-    @State private var username = ""
+    @State private var displayName = ""
     @State private var bio = ""
     @State private var avatar = "sun"
     @State private var ipRegion = ""
@@ -50,7 +50,7 @@ struct ProfileView: View {
                 .padding(.vertical, 6)
             }
             Section("个人资料") {
-                TextField("用户名", text: $username).textInputAutocapitalization(.never).autocorrectionDisabled()
+                TextField("名字", text: $displayName)
                 TextField("个人简介", text: $bio, axis: .vertical).lineLimit(3...5)
                 TextField("IP属地（可选）", text: $ipRegion)
             }
@@ -59,17 +59,17 @@ struct ProfileView: View {
                 Button(saving ? "保存中..." : "保存资料") {
                     saving = true
                     Task {
-                        let ok = await store.updateProfile(username: username, bio: bio, avatar: avatar, ipRegion: ipRegion)
+                        let ok = await store.updateProfile(displayName: displayName, bio: bio, avatar: avatar, ipRegion: ipRegion)
                         message = ok ? "资料已保存" : store.toast
                         saving = false
                     }
-                }.disabled(saving || username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }.disabled(saving || displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }
         .navigationTitle("编辑资料")
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            username = store.user?.username ?? ""
+            displayName = store.user?.username ?? ""
             bio = store.user?.bio ?? ""
             avatar = AvatarOption.all.contains { $0.id == store.user?.avatar } ? (store.user?.avatar ?? "sun") : "sun"
             ipRegion = store.user?.ipRegion ?? ""
