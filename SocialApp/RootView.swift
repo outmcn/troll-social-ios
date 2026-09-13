@@ -97,11 +97,11 @@ struct PostCard: View {
                     HStack(spacing: 5) { Text("ID：\(post.authorID)"); if !post.ipRegion.isEmpty { Text("·"); Text(post.ipRegion) } }.font(.caption).foregroundColor(.secondary)
                     Text(post.time).font(.caption2).foregroundColor(.secondary)
                 }
-                Spacer()
                 if canDelete {
+                    Spacer()
                     Button { confirmDelete = true } label: { Image(systemName: "trash").font(.caption) }.foregroundColor(.red)
                 } else {
-                    Image(systemName: "ellipsis").foregroundColor(.secondary)
+                    Spacer()
                 }
             }
             Text(post.text)

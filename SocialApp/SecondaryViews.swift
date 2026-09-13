@@ -136,7 +136,15 @@ struct MeTab: View {
         VStack(alignment: .leading, spacing: 12) {
             if category == 0 {
                 if store.posts.isEmpty { EmptyCategoryView(text: "还没有发布动态") }
-                else { ForEach(store.posts) { PostCard(post: $0, canDelete: true) } }
+                else {
+                    let mine = store.posts.filter { $0.authorID == (store.user?.userID ?? "") }
+                    if mine.isEmpty { EmptyCategoryView(text: "还没有发布动态") }
+                    else {
+                        ForEach(mine) { post in
+                            PostCard(post: post, canDelete: true)
+                        }
+                    }
+                }
             } else if category == 1 {
                 EmptyCategoryView(text: "还没有收藏内容")
             } else {

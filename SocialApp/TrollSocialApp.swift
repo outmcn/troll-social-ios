@@ -61,7 +61,17 @@ final class SocialStore: ObservableObject {
     func comment(_ post: Post, text: String, completion: @escaping ([Comment]) -> Void) { guard let token else { return }; let value = text.trimmingCharacters(in: .whitespacesAndNewlines); guard !value.isEmpty else { return }; Task { do { let result = try await api.comment(postID: post.id.uuidString, text: value, token: token); posts = posts.map { $0.id == post.id ? Post(remote: result.post) : $0 }; let resultComments: CommentsResponse = try await api.comments(postID: post.id.uuidString, token: token); completion(resultComments.comments.map { Comment(remote: $0) }) } catch { toast = error.localizedDescription } } }
     func loadComments(for post: Post) async -> [Comment] { guard let token else { return [] }; do { let result = try await api.comments(postID: post.id.uuidString, token: token); return result.comments.map { Comment(remote: $0) } } catch { toast = error.localizedDescription; return [] } }
     func favorite(_ post: Post) { guard let token else { return }; Task { do { let result = try await api.favorite(postID: post.id.uuidString, token: token); let isAdding = !favorites.contains(post.id); if let i = posts.firstIndex(where: { $0.id == post.id }) { posts[i] = Post(remote: result.post, liked: post.liked, favorite: isAdding) }; if isAdding { favorites.insert(post.id) } else { favorites.remove(post.id) } } catch { toast = error.localizedDescription } } }
- func delete(_ post: Post) { guard let token else { return }; Task { do { let _: BasicResponse = try await api.deletePost(postID: post.id.uuidString, token: token); posts.removeAll { $0.id == post.id }; favorites.remove(post.id); toast = "动态已删除" } catch { toast = error.localizedDescription } } }
+    func delete(_ post: Post) {
+        guard let token else { toast = "登录状态已失效，请重新登录"; return }
+        Task { @MainActor in
+            do {
+                let _: BasicResponse = try await api.deletePost(postID: post.id.uuidString, token: token)
+                posts.removeAll { $0.id == post.id }
+                favorites.remove(post.id)
+                toast = "动态已删除"
+            } catch { toast = "删除失败：\(error.localizedDescription)" }
+        }
+    }
 }
 
 struct Post: Identifiable { let id: UUID; var author: String; var handle: String; var authorID: String; var ipRegion: String; var time: String; var text: String; var likes: Int; var comments: Int; var favorites: Int; var liked: Bool; var favorited: Bool; var accent: Color
