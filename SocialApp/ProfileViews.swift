@@ -69,7 +69,7 @@ struct ProfileView: View {
         .navigationTitle("编辑资料")
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            displayName = store.user?.username ?? ""
+            displayName = store.user?.displayName ?? store.user?.username ?? ""
             bio = store.user?.bio ?? ""
             avatar = AvatarOption.all.contains { $0.id == store.user?.avatar } ? (store.user?.avatar ?? "sun") : "sun"
             ipRegion = store.user?.ipRegion ?? ""

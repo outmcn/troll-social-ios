@@ -36,14 +36,15 @@ struct BasicResponse: Decodable { let ok: Bool }
 struct User: Codable {
     let id: String
     var userID: String
+    var displayName: String
     var username: String
     var role: String
     var bio: String
     var avatar: String
     var ipRegion: String
-    enum CodingKeys: String, CodingKey { case id; case userID = "user_id"; case username, role, bio, avatar; case ipRegion = "ip_region" }
-    init(from decoder: Decoder) throws { let c = try decoder.container(keyedBy: CodingKeys.self); id = try c.decode(String.self, forKey: .id); userID = try c.decodeIfPresent(String.self, forKey: .userID) ?? ""; username = try c.decodeIfPresent(String.self, forKey: .username) ?? ""; role = try c.decode(String.self, forKey: .role); bio = try c.decodeIfPresent(String.self, forKey: .bio) ?? ""; avatar = try c.decodeIfPresent(String.self, forKey: .avatar) ?? ""; ipRegion = try c.decodeIfPresent(String.self, forKey: .ipRegion) ?? "未知" }
-    init(id: String, userID: String = "", username: String = "", role: String, bio: String = "", avatar: String = "", ipRegion: String = "未知") { self.id = id; self.userID = userID; self.username = username; self.role = role; self.bio = bio; self.avatar = avatar; self.ipRegion = ipRegion }
+    enum CodingKeys: String, CodingKey { case id; case userID = "user_id"; case displayName = "display_name"; case username, role, bio, avatar; case ipRegion = "ip_region" }
+    init(from decoder: Decoder) throws { let c = try decoder.container(keyedBy: CodingKeys.self); id = try c.decode(String.self, forKey: .id); userID = try c.decodeIfPresent(String.self, forKey: .userID) ?? ""; displayName = try c.decodeIfPresent(String.self, forKey: .displayName) ?? ""; username = try c.decodeIfPresent(String.self, forKey: .username) ?? ""; role = try c.decode(String.self, forKey: .role); bio = try c.decodeIfPresent(String.self, forKey: .bio) ?? ""; avatar = try c.decodeIfPresent(String.self, forKey: .avatar) ?? ""; ipRegion = try c.decodeIfPresent(String.self, forKey: .ipRegion) ?? "未知" }
+    init(id: String, userID: String = "", displayName: String = "", username: String = "", role: String, bio: String = "", avatar: String = "", ipRegion: String = "未知") { self.id = id; self.userID = userID; self.displayName = displayName; self.username = username; self.role = role; self.bio = bio; self.avatar = avatar; self.ipRegion = ipRegion }
 }
 struct AuthResponse: Decodable { let token: String; let user: User }
 struct SessionResponse: Decodable { let user: User }

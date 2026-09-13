@@ -102,7 +102,7 @@ struct MeTab: View {
                 .overlay(Text(store.avatarSymbol).font(.system(size: 36)))
             VStack(alignment: .leading, spacing: 5) {
                 HStack(spacing: 8) {
-                    Text(store.user?.username ?? "未登录").font(.title2.bold())
+                    Text(store.user?.displayName.isEmpty == false ? store.user!.displayName : "未设置").font(.title2.bold())
                     NavigationLink {
                         ProfileView().environmentObject(store)
                     } label: {
