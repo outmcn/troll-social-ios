@@ -96,7 +96,7 @@ struct PostCard: View {
                 Button { store.like(post) } label: { Label("\(post.likes)", systemImage: post.liked ? "heart.fill" : "heart").frame(maxWidth: .infinity).padding(.vertical, 5) }.buttonStyle(.bordered).tint(post.liked ? .pink : .gray)
                 Button { store.favorite(post) } label: { Label("\(post.favorites)", systemImage: store.favorites.contains(post.id) ? "bookmark.fill" : "bookmark").frame(maxWidth: .infinity).padding(.vertical, 5) }.buttonStyle(.bordered).tint(store.favorites.contains(post.id) ? .orange : .gray)
                 Button { store.selectedPost = post } label: { Label("\(post.comments)", systemImage: "message").frame(maxWidth: .infinity).padding(.vertical, 5) }.buttonStyle(.bordered).tint(.gray)
-                ShareLink(item: post.text) { Label("分享", systemImage: "arrowshape.turn.up.right").frame(maxWidth: .infinity).padding(.vertical, 5) }.buttonStyle(.bordered).tint(.gray)
+                ShareLink(item: post.text) { Image(systemName: "arrowshape.turn.up.right").frame(maxWidth: .infinity).padding(.vertical, 5) }.buttonStyle(.bordered).tint(.gray)
                 if allowsDelete { Button { store.delete(post) } label: { Image(systemName: "trash").frame(maxWidth: .infinity).padding(.vertical, 5) }.buttonStyle(.bordered).tint(.red) }
             }.font(.caption2)
         }
