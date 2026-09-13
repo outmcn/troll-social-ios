@@ -19,16 +19,21 @@ struct APIClient {
     func login(username: String, password: String) async throws -> AuthResponse { try await send("api/auth/login", method: "POST", body: JSONEncoder().encode(Credentials(username: username, password: password))) }
     func register(username: String, password: String) async throws -> RegisterResponse { try await send("api/auth/register", method: "POST", body: JSONEncoder().encode(Credentials(username: username, password: password))) }
     func session(token: String) async throws -> SessionResponse { try await send("api/auth/me", token: token) }
+    func updateProfile(username: String, bio: String, avatar: String, token: String) async throws -> SessionResponse { try await send("api/auth/profile", method: "PUT", token: token, body: JSONEncoder().encode(ProfileBody(username: username, bio: bio, avatar: avatar))) }
+    func changePassword(oldPassword: String, newPassword: String, token: String) async throws -> BasicResponse { try await send("api/auth/password", method: "PUT", token: token, body: JSONEncoder().encode(PasswordBody(oldPassword: oldPassword, newPassword: newPassword))) }
     func posts(token: String) async throws -> PostsResponse { try await send("api/posts", token: token) }
     func publish(text: String, token: String) async throws -> SinglePostResponse { try await send("api/posts", method: "POST", token: token, body: JSONEncoder().encode(PublishBody(text: text))) }
     func like(postID: String, token: String) async throws -> SinglePostResponse { try await send("api/posts/\(postID)/like", method: "POST", token: token) }
     func chats(token: String) async throws -> ChatsResponse { try await send("api/chats", token: token) }
 }
 struct Credentials: Encodable { let username: String; let password: String }
+struct ProfileBody: Encodable { let username: String; let bio: String; let avatar: String }
+struct PasswordBody: Encodable { let oldPassword: String; let newPassword: String; enum CodingKeys: String, CodingKey { case oldPassword = "old_password"; case newPassword = "new_password" } }
 struct PublishBody: Encodable { let text: String }
 struct HealthResponse: Decodable { let ok: Bool }
 struct APIErrorResponse: Decodable { let error: String }
-struct User: Codable { let id: String; let username: String; let role: String }
+struct BasicResponse: Decodable { let ok: Bool }
+struct User: Codable { let id: String; var username: String; var role: String; var bio: String = ""; var avatar: String = ""; enum CodingKeys: String, CodingKey { case id, username, role, bio, avatar } }
 struct AuthResponse: Decodable { let token: String; let user: User }
 struct SessionResponse: Decodable { let user: User }
 struct RegisterResponse: Decodable { let user: User }
