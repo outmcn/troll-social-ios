@@ -4,25 +4,35 @@ struct RootView: View {
     @EnvironmentObject private var store: SocialStore
     var body: some View {
         ZStack(alignment: .bottom) {
-            Group {
-                switch store.selectedTab {
-                case 0: HomeTab()
-                case 1: PlazaTab()
-                case 2: ChatTab()
-                default: MeTab()
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            currentTab
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             BottomBar()
-            if !store.toast.isEmpty {
-                Text(store.toast)
-                    .font(.caption.bold()).foregroundColor(.white)
-                    .padding(.horizontal, 16).padding(.vertical, 11)
-                    .background(Color.black.opacity(0.82)).clipShape(Capsule())
-                    .padding(.bottom, 76)
-            }
+            toastView
         }
-        .sheet(isPresented: $store.showingComposer) { ComposerView() }
+        .sheet(isPresented: $store.showingComposer) {
+            ComposerView().environmentObject(store)
+        }
+    }
+
+    @ViewBuilder
+    private var currentTab: some View {
+        switch store.selectedTab {
+        case 0: HomeTab()
+        case 1: PlazaTab()
+        case 2: ChatTab()
+        default: MeTab()
+        }
+    }
+
+    @ViewBuilder
+    private var toastView: some View {
+        if !store.toast.isEmpty {
+            Text(store.toast)
+                .font(.caption.bold()).foregroundColor(.white)
+                .padding(.horizontal, 16).padding(.vertical, 11)
+                .background(Color.black.opacity(0.82)).clipShape(Capsule())
+                .padding(.bottom, 76)
+        }
     }
 }
 
