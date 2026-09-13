@@ -14,7 +14,7 @@ struct RootView: View {
         }
         .preferredColorScheme(nil)
         .background(Color(.systemBackground))
-        .sheet(isPresented: $store.showingComposer) { ComposerView().environmentObject(store) }
+        .sheet(isPresented: $store.showComposer) { ComposerView().environmentObject(store) }
     }
     private var mainView: some View {
         VStack(spacing: 0) { screenView; SocialTabBar() }
@@ -64,7 +64,7 @@ struct SocialTabBar: View {
     var body: some View {
         HStack(spacing: 0) {
             nav("house.fill", "主页", 0); nav("square.grid.2x2.fill", "广场", 1)
-            Button { store.showingComposer = true } label: { Image(systemName: "plus").font(.title2.bold()).foregroundColor(.white).frame(width: 52, height: 52).background(Color.orange).clipShape(Circle()) }.frame(maxWidth: .infinity)
+            Button { store.showComposer = true } label: { Image(systemName: "plus").font(.title2.bold()).foregroundColor(.white).frame(width: 52, height: 52).background(Color.orange).clipShape(Circle()) }.frame(maxWidth: .infinity)
             nav("bubble.left.and.bubble.right.fill", "聊天", 3); nav("person.fill", "我的", 4)
         }.padding(.horizontal, 8).padding(.top, 8).padding(.bottom, 6).background(.regularMaterial)
     }
@@ -80,4 +80,50 @@ struct HomeTab: View {
 struct StoryRow: View { var body: some View { ScrollView(.horizontal, showsIndicators: false) { HStack(spacing: 14) { ForEach(["我的动态", "小岛日记", "像素研究所", "晚风"], id: \.self) { name in VStack(spacing: 6) { Circle().fill(.orange.opacity(0.2)).frame(width: 58, height: 58).overlay(Text(name.prefix(1)).font(.title2.bold()).foregroundColor(.orange)); Text(name).font(.caption) } } } } } }
 struct PlazaTab: View { @EnvironmentObject var store: SocialStore; var body: some View { NavigationStack { ScrollView { VStack(alignment: .leading, spacing: 14) { HStack { Text("广场").font(.system(size: 29, weight: .bold)); Spacer(); Image(systemName: "magnifyingglass") }; Text("发现大家正在分享的内容").foregroundColor(.secondary); FilterRow(); ForEach(store.posts) { post in PostCard(post: post) } }.padding(18) }.background(Color(.systemGroupedBackground)) } } }
 struct FilterRow: View { var body: some View { HStack { ForEach(["推荐", "关注", "生活", "兴趣"], id: \.self) { item in Text(item).font(.caption.bold()).padding(.horizontal, 13).padding(.vertical, 8).background(item == "推荐" ? Color.orange : Color(.tertiarySystemBackground)).foregroundColor(item == "推荐" ? .white : .primary).clipShape(Capsule()) } } } }
-struct PostCard: View { @EnvironmentObject var store: SocialStore; let post: Post; var body: some View { VStack(alignment: .leading, spacing: 12) { HStack { Circle().fill(post.accent.opacity(0.2)).frame(width: 42, height: 42).overlay(Text(post.author.prefix(1)).bold().foregroundColor(post.accent)); VStack(alignment: .leading, spacing: 3) { Text(post.author).bold(); HStack(spacing: 5) { Text("ID：\(post.authorID)"); if !post.ipRegion.isEmpty { Text("·"); Text(post.ipRegion) } }.font(.caption).foregroundColor(.secondary); Text(post.time).font(.caption2).foregroundColor(.secondary) }; Spacer(); Image(systemName: "ellipsis").foregroundColor(.secondary) }; Text(post.text); HStack(spacing: 24) { Button { store.like(post) } label: { Label("\(post.likes)", systemImage: post.liked ? "heart.fill" : "heart") }.foregroundColor(post.liked ? .pink : .secondary); Label("\(post.comments)", systemImage: "message"); Label("分享", systemImage: "arrowshape.turn.up.right") }.font(.caption).foregroundColor(.secondary) }.padding(15).background(Color(.secondarySystemBackground)).overlay(RoundedRectangle(cornerRadius: 18).stroke(Color(.separator).opacity(0.35), lineWidth: 0.7)).clipShape(RoundedRectangle(cornerRadius: 18)) } }
+struct PostCard: View {
+    @EnvironmentObject var store: SocialStore
+    let post: Post
+    @State private var showComments = false
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Circle().fill(post.accent.opacity(0.2)).frame(width: 42, height: 42).overlay(Text(post.author.prefix(1)).bold().foregroundColor(post.accent))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(post.author).bold()
+                    HStack(spacing: 5) { Text("ID：\(post.authorID)"); if !post.ipRegion.isEmpty { Text("·"); Text(post.ipRegion) } }.font(.caption).foregroundColor(.secondary)
+                    Text(post.time).font(.caption2).foregroundColor(.secondary)
+                }
+                Spacer()
+                if post.authorID == store.user?.userID || store.user?.role == "admin" {
+                    Button { store.delete(post) } label: { Image(systemName: "trash").font(.caption) }.foregroundColor(.secondary)
+                } else { Image(systemName: "ellipsis").foregroundColor(.secondary) }
+            }
+            Text(post.text)
+            HStack(spacing: 24) {
+                Button { store.like(post) } label: { Label("\(post.likes)", systemImage: post.liked ? "heart.fill" : "heart") }.foregroundColor(post.liked ? .pink : .secondary)
+                Button { showComments = true } label: { Label("\(post.comments)", systemImage: "message") }.foregroundColor(.secondary)
+                Label("分享", systemImage: "arrowshape.turn.up.right")
+            }.font(.caption).foregroundColor(.secondary)
+        }
+        .padding(15).background(Color(.secondarySystemBackground)).overlay(RoundedRectangle(cornerRadius: 18).stroke(Color(.separator).opacity(0.35), lineWidth: 0.7)).clipShape(RoundedRectangle(cornerRadius: 18))
+        .sheet(isPresented: $showComments) { CommentsView(post: post).environmentObject(store) }
+    }
+}
+
+struct CommentsView: View {
+    @EnvironmentObject var store: SocialStore
+    let post: Post
+    @State private var comments: [Comment] = []
+    @State private var text = ""
+    @State private var loading = true
+    var body: some View {
+        NavigationStack {
+            VStack {
+                if loading { ProgressView() }
+                else if comments.isEmpty { Text("还没有评论").foregroundColor(.secondary).padding(.top, 35); Spacer() }
+                else { List(comments) { c in VStack(alignment: .leading, spacing: 4) { Text("ID：\(c.authorID)").font(.caption).foregroundColor(.secondary); Text(c.text) } } }
+                HStack { TextField("说点什么...", text: $text).textFieldStyle(.roundedBorder); Button("发送") { store.comment(post, text: text) { comments = $0; text = "" } }.disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) }.padding()
+            }.navigationTitle("评论").navigationBarTitleDisplayMode(.inline).task { comments = await store.loadComments(for: post); loading = false }
+        }
+    }
+}

@@ -24,57 +24,27 @@ struct APIClient {
     func posts(token: String) async throws -> PostsResponse { try await send("api/posts", token: token) }
     func publish(text: String, token: String) async throws -> SinglePostResponse { try await send("api/posts", method: "POST", token: token, body: JSONEncoder().encode(PublishBody(text: text))) }
     func like(postID: String, token: String) async throws -> SinglePostResponse { try await send("api/posts/\(postID)/like", method: "POST", token: token) }
-    func chats(token: String) async throws -> ChatsResponse { try await send("api/chats", token: token) }
+    func comments(postID: String, token: String) async throws -> CommentsResponse { try await send("api/posts/\(postID)/comments", token: token) }
+    func comment(postID: String, text: String, token: String) async throws -> SinglePostResponse { try await send("api/posts/\(postID)/comments", method: "POST", token: token, body: JSONEncoder().encode(CommentBody(text: text))) }
+    func deletePost(postID: String, token: String) async throws -> BasicResponse { try await send("api/posts/\(postID)", method: "DELETE", token: token) }
 }
 struct Credentials: Encodable { let username: String; let password: String }
 struct ProfileBody: Encodable { let displayName: String; let bio: String; let avatar: String; let ipRegion: String; enum CodingKeys: String, CodingKey { case displayName = "display_name"; case bio, avatar; case ipRegion = "ip_region" } }
 struct PasswordBody: Encodable { let oldPassword: String; let newPassword: String; enum CodingKeys: String, CodingKey { case oldPassword = "old_password"; case newPassword = "new_password" } }
 struct PublishBody: Encodable { let text: String }
+struct CommentBody: Encodable { let text: String }
 struct HealthResponse: Decodable { let ok: Bool }
 struct APIErrorResponse: Decodable { let error: String }
 struct BasicResponse: Decodable { let ok: Bool }
-struct User: Codable {
-    let id: String
-    var userID: String
-    var displayName: String
-    var username: String
-    var role: String
-    var bio: String
-    var avatar: String
-    var ipRegion: String
-    enum CodingKeys: String, CodingKey { case id; case userID = "user_id"; case displayName = "display_name"; case username, role, bio, avatar; case ipRegion = "ip_region" }
-    init(from decoder: Decoder) throws { let c = try decoder.container(keyedBy: CodingKeys.self); id = try c.decode(String.self, forKey: .id); userID = try c.decodeIfPresent(String.self, forKey: .userID) ?? ""; displayName = try c.decodeIfPresent(String.self, forKey: .displayName) ?? ""; username = try c.decodeIfPresent(String.self, forKey: .username) ?? ""; role = try c.decode(String.self, forKey: .role); bio = try c.decodeIfPresent(String.self, forKey: .bio) ?? ""; avatar = try c.decodeIfPresent(String.self, forKey: .avatar) ?? ""; ipRegion = try c.decodeIfPresent(String.self, forKey: .ipRegion) ?? "未知" }
-    init(id: String, userID: String = "", displayName: String = "", username: String = "", role: String, bio: String = "", avatar: String = "", ipRegion: String = "未知") { self.id = id; self.userID = userID; self.displayName = displayName; self.username = username; self.role = role; self.bio = bio; self.avatar = avatar; self.ipRegion = ipRegion }
-}
+struct User: Codable { let id: String; var userID: String; var displayName: String; var username: String; var role: String; var bio: String; var avatar: String; var ipRegion: String; enum CodingKeys: String, CodingKey { case id; case userID = "user_id"; case displayName = "display_name"; case username, role, bio, avatar; case ipRegion = "ip_region" }; init(from decoder: Decoder) throws { let c = try decoder.container(keyedBy: CodingKeys.self); id = try c.decode(String.self, forKey: .id); userID = try c.decodeIfPresent(String.self, forKey: .userID) ?? ""; displayName = try c.decodeIfPresent(String.self, forKey: .displayName) ?? ""; username = try c.decodeIfPresent(String.self, forKey: .username) ?? ""; role = try c.decode(String.self, forKey: .role); bio = try c.decodeIfPresent(String.self, forKey: .bio) ?? ""; avatar = try c.decodeIfPresent(String.self, forKey: .avatar) ?? ""; ipRegion = try c.decodeIfPresent(String.self, forKey: .ipRegion) ?? "未知" } }
 struct AuthResponse: Decodable { let token: String; let user: User }
 struct SessionResponse: Decodable { let user: User }
 struct RegisterResponse: Decodable { let user: User }
 struct PostsResponse: Decodable { let posts: [RemotePost] }
 struct SinglePostResponse: Decodable { let post: RemotePost }
-struct RemotePost: Codable, Identifiable {
-    let id: String
-    let author: String
-    let handle: String
-    let authorID: String
-    let ipRegion: String
-    let text: String
-    var likes: Int
-    let comments: Int
-    let createdAt: String?
-    enum CodingKeys: String, CodingKey { case id, author, handle; case authorID = "author_id"; case ipRegion = "ip_region"; case text, likes, comments; case createdAt = "created_at" }
-    init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        id = try c.decode(String.self, forKey: .id)
-        author = try c.decode(String.self, forKey: .author)
-        handle = try c.decodeIfPresent(String.self, forKey: .handle) ?? ""
-        authorID = try c.decodeIfPresent(String.self, forKey: .authorID) ?? ""
-        ipRegion = try c.decodeIfPresent(String.self, forKey: .ipRegion) ?? ""
-        text = try c.decode(String.self, forKey: .text)
-        likes = try c.decode(Int.self, forKey: .likes)
-        comments = try c.decode(Int.self, forKey: .comments)
-        createdAt = try c.decodeIfPresent(String.self, forKey: .createdAt)
-    }
-}
+struct CommentsResponse: Decodable { let comments: [RemoteComment] }
+struct RemoteComment: Codable, Identifiable { let id: String; let authorID: String; let text: String; let createdAt: String?; enum CodingKeys: String, CodingKey { case id; case authorID = "author_id"; case text; case createdAt = "created_at" } }
+struct RemotePost: Codable, Identifiable { let id: String; let author: String; let handle: String; let authorID: String; let ipRegion: String; let text: String; var likes: Int; let comments: Int; let createdAt: String?; enum CodingKeys: String, CodingKey { case id, author, handle; case authorID = "author_id"; case ipRegion = "ip_region"; case text, likes, comments; case createdAt = "created_at" }; init(from decoder: Decoder) throws { let c = try decoder.container(keyedBy: CodingKeys.self); id = try c.decode(String.self, forKey: .id); author = try c.decode(String.self, forKey: .author); handle = try c.decodeIfPresent(String.self, forKey: .handle) ?? ""; authorID = try c.decodeIfPresent(String.self, forKey: .authorID) ?? ""; ipRegion = try c.decodeIfPresent(String.self, forKey: .ipRegion) ?? ""; text = try c.decode(String.self, forKey: .text); likes = try c.decode(Int.self, forKey: .likes); comments = try c.decode(Int.self, forKey: .comments); createdAt = try c.decodeIfPresent(String.self, forKey: .createdAt) } }
 struct ChatsResponse: Decodable { let chats: [RemoteChat] }
 struct RemoteChat: Codable, Identifiable { let id: String; let name: String; let message: String; let time: String; let unread: Int }
 enum APIError: Error, LocalizedError { case badResponse; case message(String); var errorDescription: String? { if case .message(let value) = self { return value }; return "网络请求失败" } }

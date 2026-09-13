@@ -11,7 +11,8 @@ final class SocialStore: ObservableObject {
     @Published var selectedTab = 0
     @Published var posts: [Post] = []
     @Published var chats: [Chat] = []
-    @Published var showingComposer = false
+    @Published var showComposer = false
+    @Published var selectedPost: Post?
     @Published var toast = ""
     @Published var user: User?
     @Published var isLoading = false
@@ -55,11 +56,18 @@ final class SocialStore: ObservableObject {
         isLoading = false
     }
     func like(_ post: Post) { guard let token else { return }; Task { do { let result = try await api.like(postID: post.id.uuidString, token: token); if let i = posts.firstIndex(where: { $0.id == post.id }) { posts[i] = Post(remote: result.post, liked: !post.liked) } } catch { toast = error.localizedDescription } } }
-    func publish(_ text: String) { guard let token else { return }; let value = text.trimmingCharacters(in: .whitespacesAndNewlines); guard !value.isEmpty else { return }; Task { do { let result = try await api.publish(text: value, token: token); posts.insert(Post(remote: result.post), at: 0); showingComposer = false; toast = "已发布到广场" } catch { toast = error.localizedDescription } } }
+    func publish(_ text: String) { guard let token else { return }; let value = text.trimmingCharacters(in: .whitespacesAndNewlines); guard !value.isEmpty else { return }; Task { do { let result = try await api.publish(text: value, token: token); posts.insert(Post(remote: result.post), at: 0); showComposer = false; toast = "已发布到广场" } catch { toast = error.localizedDescription } } }
+    func comment(_ post: Post, text: String, completion: @escaping ([Comment]) -> Void) { guard let token else { return }; let value = text.trimmingCharacters(in: .whitespacesAndNewlines); guard !value.isEmpty else { return }; Task { do { let result = try await api.comment(postID: post.id.uuidString, text: value, token: token); posts = posts.map { $0.id == post.id ? Post(remote: result.post) : $0 }; let resultComments: CommentsResponse = try await api.comments(postID: post.id.uuidString, token: token); completion(resultComments.comments.map { Comment(remote: $0) }) } catch { toast = error.localizedDescription } } }
+    func loadComments(for post: Post) async -> [Comment] { guard let token else { return [] }; do { let result = try await api.comments(postID: post.id.uuidString, token: token); return result.comments.map { Comment(remote: $0) } } catch { toast = error.localizedDescription; return [] } }
+    func delete(_ post: Post) { guard let token else { return }; Task { do { let _: BasicResponse = try await api.deletePost(postID: post.id.uuidString, token: token); posts.removeAll { $0.id == post.id }; toast = "动态已删除" } catch { toast = error.localizedDescription } } }
 }
 
 struct Post: Identifiable { let id: UUID; var author: String; var handle: String; var authorID: String; var ipRegion: String; var time: String; var text: String; var likes: Int; var comments: Int; var liked: Bool; var accent: Color
     init(remote: RemotePost, liked: Bool = false) { id = UUID(uuidString: remote.id) ?? UUID(); author = remote.author; handle = remote.handle; authorID = remote.authorID; ipRegion = remote.ipRegion; time = "刚刚"; text = remote.text; likes = remote.likes; comments = remote.comments; self.liked = liked; accent = .orange }
+}
+
+struct Comment: Identifiable { let id: String; let authorID: String; let text: String; let time: String
+    init(remote: RemoteComment) { id = remote.id; authorID = remote.authorID; text = remote.text; time = "刚刚" }
 }
 struct Chat: Identifiable { let id: UUID; let name: String; let message: String; let time: String; let unread: Int
     init(remote: RemoteChat) { id = UUID(uuidString: remote.id) ?? UUID(); name = remote.name; message = remote.message; time = remote.time; unread = remote.unread }
